@@ -1,0 +1,132 @@
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Base styles */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f9f7f4;
+  padding: 40px;
+}
+
+.book-modal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  display: flex;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  max-width: 1000px;
+  width: 100%;
+  gap: 30px;
+}
+
+/* Left side with image */
+.left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.book-cover {
+  width: 220px;
+  height: auto;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.genre-tags {
+  margin-top: 15px;
+}
+
+.tag {
+  display: inline-block;
+  background-color: #e8e8e8;
+  padding: 5px 12px;
+  margin: 0 5px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+/* Right side content */
+.right {
+  flex: 2;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.author {
+  color: #555;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+/* Stats section */
+.stats {
+  display: flex;
+  gap: 40px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.stat p {
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.stat strong {
+  font-size: 18px;
+  color: #000;
+}
+
+/* Buttons */
+.buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+button.read,
+button.favorite {
+  background-color: #0e3a5d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+button.favorite {
+  background-color: #2e5a7b;
+}
+
+button:hover {
+  background-color: #092d47;
+}
+
+/* Description */
+.description h3 {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.description p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+}

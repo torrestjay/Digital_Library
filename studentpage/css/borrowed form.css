@@ -1,0 +1,94 @@
+body {
+  font-family: 'Montserrat', sans-serif;
+  background-color: #f4f4f4;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 70vh;
+  margin: 0;
+}
+.form-container {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  text-align: start; /* align form content to the left */
+  max-width: 400px;
+  width: 100%;
+}
+
+.logo {
+  width: 50px;
+  display: block;
+  margin: 0 auto 20px;
+}
+
+h2 {
+  font-size: 20px;
+  margin-bottom: 20px;
+  text-align: center; /* keep the title centered */
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.form-row {
+  display: flex;
+  gap: 30px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.buttons {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.buttons button {
+  padding: 10px 20px;
+  border: none;
+  color: white;
+  background-color: #073b4c;
+  border-radius: 5px;
+  margin: 0 5px;
+  cursor: pointer;
+}
+
+.buttons button:hover {
+  background-color: #055272;
+}
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.1);/* dim background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Optional: Remove this from body if not needed anymore */
+body {
+  font-family: 'Montserrat', sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+}

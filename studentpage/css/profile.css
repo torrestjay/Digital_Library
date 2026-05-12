@@ -1,0 +1,205 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html {
+  height: 100%;
+  font-family: sans-serif;
+  background-color: #f9f7f4;
+}
+
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  background-color: #0e3a5d;
+  width: 250px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  z-index: 1001; /* Added */
+  position: relative; /* Added */
+}
+
+.sidebar.collapsed {
+  width: 70px;
+}
+
+.logo {
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  cursor: pointer;
+  padding: 10px;
+}
+
+.logo img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+}
+
+.nav {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding-top: 20px;
+}
+
+.nav a,
+.sign-out a {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  color: white;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.nav a:hover,
+.sign-out a:hover {
+  background-color: #12476f;
+}
+
+.nav .icon,
+.sign-out .icon {
+  width: 25px;
+  height: 25px;
+}
+
+.nav span,
+.sign-out span {
+  margin-left: 10px;
+  white-space: nowrap;
+}
+
+.sidebar.collapsed span {
+  display: none;
+}
+
+.sign-out {
+  margin-top: auto;
+}
+
+/* Header */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  padding: 12px 20px;
+  background-color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  z-index: 1000;
+}
+
+.header-icons .icon {
+  margin-left: 10px;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+}
+
+/* Main content */
+.main-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 80px 20px 20px; /* prevent content from hiding behind header */
+  overflow-y: auto;
+  background-color: #f9f7f4;
+}
+
+/* Profile section */
+.profile-container {
+  background-color: #f9f7f4;
+  padding: 20px;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background-color: #ddd;
+  margin-bottom: 10px;
+}
+
+.profile-info h2 {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.profile-info p {
+  font-size: 14px;
+  color: #333;
+  margin: 2px 0;
+}
+
+/* Tabs and edit button */
+.profile-tabs {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 2px solid #ccc;
+  padding: 10px 0;
+  margin-bottom: 20px;
+}
+
+.profile-tabs > div {
+  display: flex;
+}
+
+.tab {
+  background-color: #0e3a5d;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  margin-right: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 3px;
+}
+
+.edit-btn {
+  background-color: #0e3a5d;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 3px;
+}
+
+/* Profile card */
+.profile-card {
+  background-color: white;
+  padding: 20px;
+  box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+  width: 200px;
+}
+
+.profile-card h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Book Modal</title>
+  <link rel="stylesheet" href="../css/try.css" />
+</head>
+<body>
+  <!-- Trigger Button -->
+  <button type="button" id="openModal">Open Book</button>
+
+  <!-- Modal Overlay -->
+  <div class="modal-overlay" id="modal">
+    <div class="book-modal">
+      <button type="button" class="close-btn" id="closeModal">&times;</button>
+
+      <div class="book-content">
+        <div class="book-image">
+          <img src="../images/gatsby.jpg" alt="The Great Gatsby" />
+          <div class="genre-tags">
+            <span>Romance</span>
+            <span>Fiction</span>
+          </div>
+        </div>
+
+        <div class="book-details">
+          <h1>The Great Gatsby</h1>
+          <h3>F. Scott Fitzgerald</h3>
+
+          <div class="book-stats">
+            <div><strong>15.5M</strong><br>Reads</div>
+            <div><strong>400K</strong><br>Votes</div>
+            <div><strong>15</strong><br>Parts</div>
+          </div>
+
+          <div class="book-buttons">
+            <button type="button" class="read-btn">Read</button>
+            <button type="button" class="favorite-btn">Favorite</button>
+          </div>
+
+          <h4>Description:</h4>
+          <p>
+            A novel of mystery and tragedy, <em>The Great Gatsby</em> explores the American Dream through the story of Jay Gatsby and his unrelenting love for Daisy Buchanan.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("openModal").addEventListener("click", () => {
+      document.getElementById("modal").style.display = "flex";
+    });
+
+    document.getElementById("closeModal").addEventListener("click", () => {
+      document.getElementById("modal").style.display = "none";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+/* Basic Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background-color: #f4f4f4;
+}
+
+/* Modal Background */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+/* Modal Container */
+.edit-profile-modal {
+  background: #fff;
+  padding: 30px 35px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+/* Info Text */
+.modal-info {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.modal-info a {
+  color: #2e7d32;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+/* Form Styles */
+.edit-profile-form .form-group {
+  margin-bottom: 20px;
+}
+
+.edit-profile-form label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: bold;
+  color: #333;
+}
+
+.edit-profile-form input,
+.edit-profile-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+/* Buttons */
+.form-buttons {
+  margin-top: 25px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.save-btn,
+.cancel-btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+}
+
+.save-btn {
+  background-color: #195680;
+  color: white;
+}
+
+.save-btn:hover {
+  background-color: #0C3754;
+}
+
+.cancel-btn {
+  background-color: #ccc;
+  color: #333;
+}
+
+.cancel-btn:hover {
+  background-color: #b3b3b3;
+}

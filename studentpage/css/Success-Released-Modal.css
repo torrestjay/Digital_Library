@@ -1,0 +1,45 @@
+/* Modal Background */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 80px;
+  z-index: 1000;
+}
+
+/* Modal Box */
+.modal-box {
+  background: #fff;
+  padding: 40px 30px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  font-family: 'Segoe UI', sans-serif;
+  width: 400px;
+}
+
+/* Check Icon */
+.check-icon {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 20px;
+}
+
+/* Title */
+.modal-box h2 {
+  color: #073b4c;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+
+/* Book Title Text */
+.book-title {
+  font-size: 16px;
+  color: #333;
+}

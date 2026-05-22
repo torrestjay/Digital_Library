@@ -193,7 +193,7 @@ $top_books_result = mysqli_query($conn, $top_books_query);
 
     <section class="content">
       <div class="dashboard-header">
-        <h1>Hello, <?php echo ucwords(htmlspecialchars($user['fullname'])); ?>!</h1>
+        <h1>Helloooo, <?php echo ucwords(htmlspecialchars($user['fullname'])); ?>!</h1>
         <p><?php echo date("F j, Y | l, h:i A"); ?></p>
       </div>
 

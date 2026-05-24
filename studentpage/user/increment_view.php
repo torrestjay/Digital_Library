@@ -1,6 +1,5 @@
-<?php
+﻿<?php
 include '../dbcon.php';
-
 if (isset($_POST['book_id'])) {
     $book_id = intval($_POST['book_id']);
     $sql = "UPDATE books SET views = views + 1 WHERE id = ?";

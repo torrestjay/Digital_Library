@@ -1,31 +1,29 @@
-/* Reset + Base styles */
+﻿/* Reset + Base styles */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-
 body {
   font-family: 'Montserrat', sans-serif;
-  background-color: #f4f4f4;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4fa 100%);
+  color: #14324a;
   height: 100vh;
   overflow: hidden;
 }
-
 /* Centered modal overlay */
 .success-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   height: 100vh;
-  width: 100vw;
+  width: 100%;
   background: rgba(0, 0, 0, 0.4); /* dark overlay */
   display: flex;
   justify-content: center;
   align-items: center; /* center vertically */
   z-index: 9999;
 }
-
 /* Modal card (form-style) */
 .success-modal {
   background: #fff;
@@ -36,41 +34,36 @@ body {
   width: 100%;
   text-align: center;
 }
-
 /* Check icon */
 .success-icon {
   width: 80px;
   height: 80px;
   margin-bottom: 25px;
 }
-
 /* Title */
 .success-modal h2 {
   font-size: 26px;
-  color: black;
+  color: #0e3a5d;
   margin-bottom: 20px;
 }
-
 /* Message */
 .success-modal p {
   font-size: 16px;
-  color: black;
+  color: #5f7385;
   line-height: 1.5;
   margin-bottom: 30px;
 }
-
 /* Continue button */
 .continue-btn {
   padding: 12px 28px;
   font-size: 16px;
   color: white;
-  background-color: #0C3754;
+  background: linear-gradient(135deg, #0e3a5d, #1b678f);
   border: none;
-  border-radius: 6px;
+  border-radius: 999px;
   cursor: pointer;
   transition: background 0.2s ease-in-out;
 }
-
 .continue-btn:hover {
-  background-color: #1b5e20;
+  transform: translateY(-1px);
 }

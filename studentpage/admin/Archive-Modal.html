@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -6,14 +6,16 @@
   <link rel="stylesheet" href="../css/Archive-Modal.css">
 </head>
 <body>
-  <div class="modal-overlay">
-    <div class="modal-box">
-      <p class="modal-text">Are you sure you want to archive this book?</p>
+  <main class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="archiveTitle" aria-describedby="archiveDesc">
+    <section class="modal-box">
+      <p style="letter-spacing: 0.12em; text-transform: uppercase; color: #1b678f; font-weight: 700; margin-bottom: 8px;">Archive Action</p>
+      <h2 id="archiveTitle" style="margin-bottom: 10px; color: #0e3a5d;">Archive Book</h2>
+      <p class="modal-text" id="archiveDesc">Are you sure you want to archive this book? Archived books will be hidden from the active catalog until restored.</p>
       <div class="button-group">
-        <button type="button" class="yes-btn">YES</button>
-        <button type="button" class="no-btn">NO</button>
+        <button type="button" class="yes-btn">Yes, Archive</button>
+        <button type="button" class="no-btn">Cancel</button>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 </body>
 </html>

@@ -1,48 +1,50 @@
-<?php
+﻿<?php
 session_start();
 include('../dbcon.php');
-
 // Add Book functionality
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_book'])) {
-  // Generate a unique token for this upload
-  $upload_token = uniqid();
-
-  // Check if this is a duplicate submission
-  if (!isset($_SESSION['last_upload_token']) || $_SESSION['last_upload_token'] !== $upload_token) {
-    $title = $_POST['title'];
-    $author = $_POST['author'];
-    $category = $_POST['category'];
-    $description = $_POST['description'];
-
-    // Handle file upload
-    $cover_image = '';
-    if ($_FILES['cover_image']['error'] === UPLOAD_ERR_OK) {
-      $file_ext = pathinfo($_FILES['cover_image']['name'], PATHINFO_EXTENSION);
-      $cover_image = uniqid() . '.' . $file_ext;
-      $upload_dir = "../Images/";
-      move_uploaded_file($_FILES['cover_image']['tmp_name'], $upload_dir . $cover_image);
-    }
-
-    // Insert into database
-    $stmt = $conn->prepare("INSERT INTO books (title, author, category, cover_image, views, description, created_at) VALUES (?, ?, ?, ?, 0, ?, NOW())");
-
-    if (!$stmt) {
-      die("Prepare failed: " . $conn->error);
-    }
-
-    $stmt->bind_param("sssss", $title, $author, $category, $cover_image, $description);
-    $stmt->execute();
-    $stmt->close();
-
-    // Store the upload token to prevent duplicates
-    $_SESSION['last_upload_token'] = $upload_token;
-
-    // Redirect to prevent form resubmission
-    header("Location: " . $_SERVER['PHP_SELF']);
-    exit();
+  $title = $_POST['title'];
+  $author = $_POST['author'];
+  $category = $_POST['category'];
+  $description = $_POST['description'];
+  $cover_image = '';
+  if ($_FILES['cover_image']['error'] === UPLOAD_ERR_OK) {
+    $file_ext = pathinfo($_FILES['cover_image']['name'], PATHINFO_EXTENSION);
+    $cover_image = uniqid() . '.' . $file_ext;
+    $upload_dir = "../Images/";
+    move_uploaded_file($_FILES['cover_image']['tmp_name'], $upload_dir . $cover_image);
   }
+  $stmt = $conn->prepare("INSERT INTO books (title, author, category, cover_image, views, description, created_at) VALUES (?, ?, ?, ?, 0, ?, NOW())");
+  if (!$stmt) {
+    die("Prepare failed: " . $conn->error);
+  }
+  $stmt->bind_param("sssss", $title, $author, $category, $cover_image, $description);
+  $stmt->execute();
+  $stmt->close();
+  header("Location: " . $_SERVER['PHP_SELF'] . "?added=1");
+  exit();
 }
-
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_book'])) {
+  $book_id = (int)$_POST['book_id'];
+  $stmt = $conn->prepare("SELECT cover_image FROM books WHERE id = ?");
+  $stmt->bind_param("i", $book_id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $book = $result->fetch_assoc();
+  $stmt->close();
+  if ($book && !empty($book['cover_image'])) {
+    $image_path = "../Images/" . $book['cover_image'];
+    if (file_exists($image_path)) {
+      unlink($image_path);
+    }
+  }
+  $stmt = $conn->prepare("DELETE FROM books WHERE id = ?");
+  $stmt->bind_param("i", $book_id);
+  $stmt->execute();
+  $stmt->close();
+  header("Location: " . $_SERVER['PHP_SELF'] . "?deleted=1");
+  exit();
+}
 // Fetch book details for modal if ID is provided
 $book_to_edit = null;
 if (isset($_GET['edit_id'])) {
@@ -54,18 +56,16 @@ if (isset($_GET['edit_id'])) {
   $book_to_edit = $result->fetch_assoc();
   $stmt->close();
 }
-
 // Fetch all unique categories
 $category_query = "SELECT DISTINCT category FROM books";
 $category_result = mysqli_query($conn, $category_query);
 if (!$category_result) {
   die("Error fetching categories: " . mysqli_error($conn));
 }
+$genre_options = ['Fantasy', 'Fiction', 'Literary Fiction', 'Romance', 'Children', 'Health', 'Self-help', 'Motivational'];
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -74,36 +74,60 @@ if (!$category_result) {
   <link rel="stylesheet" href="../css/AdminBookEdit.css" />
   <!-- SweetAlert2 CDN -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
     *{
       font-family: 'Poppins', sans-serif;
-
     }
     /* Form Styles */
     .add-book-form {
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 31, 46, 0.62);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 1200;
+    }
+    .add-book-modal {
       background: #fff;
-      padding: 25px;
-      border-radius: 10px;
-      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-      margin-bottom: 30px;
-      max-width: 600px;
-      transition: box-shadow 0.3s ease;
+      width: 100%;
+      max-width: 700px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+      position: relative;
     }
-
-    .add-book-form:hover {
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    .add-book-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
     }
-
     .add-book-form h3 {
-      margin-top: 0;
+      margin: 0;
       color: #005b7f;
       font-size: 1.5rem;
-      margin-bottom: 20px;
       font-weight: 600;
     }
-
+    .modal-close-btn {
+      border: none;
+      background: #f1f5f9;
+      color: #0f172a;
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+    .modal-close-btn:hover {
+      background: #e2e8f0;
+    }
     .add-book-form input[type="text"],
     .add-book-form textarea {
       width: 100%;
@@ -115,20 +139,17 @@ if (!$category_result) {
       box-sizing: border-box;
       transition: border-color 0.3s, box-shadow 0.3s;
     }
-
     .add-book-form input[type="text"]:focus,
     .add-book-form textarea:focus {
       border-color: #005b7f;
       box-shadow: 0 0 0 2px rgba(0, 91, 127, 0.2);
       outline: none;
     }
-
     .add-book-form textarea {
       height: 120px;
       resize: vertical;
       min-height: 100px;
     }
-
     .add-book-form input[type="file"] {
       margin-bottom: 15px;
       width: 100%;
@@ -138,11 +159,9 @@ if (!$category_result) {
       border-radius: 6px;
       transition: border-color 0.3s;
     }
-
     .add-book-form input[type="file"]:hover {
       border-color: #005b7f;
     }
-
     /* Button Styles */
     .add-book-form button {
       background-color: #005b7f;
@@ -156,17 +175,59 @@ if (!$category_result) {
       transition: all 0.3s;
       width: 100%;
     }
-
     .add-book-form button:hover {
       background-color: #0078a5;
       transform: translateY(-2px);
       box-shadow: 0 4px 8px rgba(0, 91, 127, 0.3);
     }
-
     .add-book-form button:active {
       transform: translateY(0);
     }
-
+    .book-actions-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 18px;
+    }
+    .action-btn {
+      border: none;
+      border-radius: 6px;
+      padding: 10px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+    .action-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    }
+    .add-btn {
+      background: #005b7f;
+      color: #fff;
+    }
+    .book-item-actions {
+      position: relative;
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      justify-content: center;
+      z-index: 5;
+    }
+    .edit-btn,
+    .delete-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #fff;
+    }
+    .edit-btn {
+      background: rgba(0, 91, 127, 0.92);
+    }
+    .delete-btn {
+      background: rgba(220, 53, 69, 0.92);
+    }
     /* Message Styles */
     .success-message {
       color: #28a745;
@@ -177,7 +238,6 @@ if (!$category_result) {
       border-radius: 5px;
       border-left: 4px solid #28a745;
     }
-
     .error-message {
       color: #dc3545;
       margin-bottom: 15px;
@@ -187,21 +247,21 @@ if (!$category_result) {
       border-radius: 5px;
       border-left: 4px solid #dc3545;
     }
-
     /* Book Item Styles */
     .book-item {
       position: relative;
-      display: inline-block;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
       margin: 15px;
       border-radius: 8px;
-      overflow: hidden;
+      overflow: visible;
+      z-index: 1;
       transition: all 0.3s ease;
     }
-
     .book-item:hover {
       transform: translateY(-5px);
     }
-
     .book-cover {
       border-radius: 8px;
       transition: all 0.3s ease;
@@ -210,12 +270,10 @@ if (!$category_result) {
       object-fit: cover;
       display: block;
     }
-
     .book-item:hover .book-cover {
       transform: scale(1.03);
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     }
-
     /* Book Title Overlay */
     .book-title-overlay {
       position: absolute;
@@ -235,7 +293,6 @@ if (!$category_result) {
       transition: all 0.3s ease;
       font-weight: 500;
     }
-
     .book-item:hover .book-title-overlay {
       white-space: normal;
       overflow: visible;
@@ -243,7 +300,6 @@ if (!$category_result) {
       padding: 15px 10px;
       backdrop-filter: blur(2px);
     }
-
     /* Modal Styles */
     .modal-overlay {
       display: <?php echo isset($book_to_edit) ? 'flex' : 'none'; ?>;
@@ -257,7 +313,6 @@ if (!$category_result) {
       justify-content: center;
       align-items: center;
     }
-
     .modal-box {
       background: white;
       border-radius: 10px;
@@ -268,7 +323,6 @@ if (!$category_result) {
       padding: 25px;
       box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
     }
-
     .modal-header {
       display: flex;
       align-items: center;
@@ -276,18 +330,15 @@ if (!$category_result) {
       border-bottom: 1px solid #eee;
       padding-bottom: 15px;
     }
-
     .modal-icon {
       width: 40px;
       height: 40px;
       margin-right: 15px;
     }
-
     .modal-header h2 {
       margin: 0;
       color: #005b7f;
     }
-
     .chapter-btn {
       background: #005b7f;
       color: white;
@@ -297,28 +348,23 @@ if (!$category_result) {
       cursor: pointer;
       transition: background 0.3s;
     }
-
     .chapter-btn:hover {
       background: #0078a5;
     }
-
     .form-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px;
     }
-
     .form-group {
       margin-bottom: 15px;
     }
-
     .form-group label {
       display: block;
       margin-bottom: 5px;
       font-weight: 500;
       color: #555;
     }
-
     .form-group input[type="text"],
     .form-group textarea {
       width: 100%;
@@ -327,25 +373,21 @@ if (!$category_result) {
       border-radius: 5px;
       font-size: 1rem;
     }
-
     .form-group textarea {
       min-height: 100px;
       resize: vertical;
     }
-
     .cover-icon {
       display: block;
       border-radius: 5px;
       margin-top: 10px;
     }
-
     .button-group {
       display: flex;
       justify-content: flex-end;
       gap: 15px;
       margin-top: 20px;
     }
-
     .cancel-btn,
     .save-btn {
       padding: 10px 20px;
@@ -353,57 +395,47 @@ if (!$category_result) {
       cursor: pointer;
       transition: all 0.3s;
     }
-
     .cancel-btn {
       background: #f0f0f0;
       color: #333;
       text-decoration: none;
       border: 1px solid #ddd;
     }
-
     .cancel-btn:hover {
       background: #e0e0e0;
     }
-
     .save-btn {
       background: #005b7f;
       color: white;
       border: none;
     }
-
     .save-btn:hover {
       background: #0078a5;
     }
-
     /* Responsive Adjustments */
     @media (max-width: 768px) {
-      .add-book-form {
+      .add-book-modal {
         padding: 20px;
         max-width: 100%;
       }
-
       .book-cover {
         width: 120px;
         height: 160px;
       }
-
       .book-title-overlay {
         font-size: 11px;
         padding: 10px 5px 3px;
       }
-
       .modal-box {
         width: 95%;
         padding: 15px;
       }
-
       .form-grid {
         grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
-
 <body>
   <div class="container">
     <!-- Sidebar -->
@@ -421,7 +453,6 @@ if (!$category_result) {
         <a href="../logout.php"><img class="icon" src="../Images/signout.png" alt="Signout Icon" /><span>Sign Out</span></a>
       </div>
     </aside>
-
     <!-- Main Content -->
     <main class="main-content">
       <!-- Header with Icons -->
@@ -431,35 +462,39 @@ if (!$category_result) {
           <a href="SettingAdmin.php"><img class="icon" src="../Images/profile.png"></a>
         </div>
       </header>
-
       <!-- Title & Search Bar Section -->
       <section class="book-controls">
         <h2 class="book-title">Available Books</h2>
+        <div class="book-actions-bar">
+          <button type="button" class="action-btn add-btn" onclick="openAddModal()">Add Book</button>
+        </div>
         <!-- <div class="search-bar">
           <input type="text" placeholder="Search" />
           <button><img src="../Images/search-icon.png" alt="Search Icon"></button>
         </div> -->
       </section>
-
       <!-- Add Book Form -->
-      <section class="add-book-form">
-        <form action="" method="POST" enctype="multipart/form-data">
-          <h3>Add New Book</h3>
-          <?php if (isset($_SESSION['last_upload_token'])): ?>
-            <div class="success-message">Book added successfully!</div>
-            <?php unset($_SESSION['last_upload_token']); ?>
-          <?php endif; ?>
-
-          <input type="text" name="title" placeholder="Title" required>
-          <input type="text" name="author" placeholder="Author" required>
-          <input type="text" name="category" placeholder="Category" required>
-          <textarea name="description" placeholder="Description" required></textarea>
-          <input type="file" name="cover_image" accept="image/*" required>
-          <input type="hidden" name="upload_token" value="<?php echo uniqid(); ?>">
-          <button type="submit" name="add_book">Add Book</button>
-        </form>
+      <section class="add-book-form" id="addModal" aria-hidden="true">
+        <div class="add-book-modal">
+          <div class="add-book-modal-header">
+            <h3>Add New Book</h3>
+            <button type="button" class="modal-close-btn" onclick="closeAddModal()" aria-label="Close">×</button>
+          </div>
+          <form action="" method="POST" enctype="multipart/form-data">
+            <input type="text" name="title" placeholder="Title" required>
+            <input type="text" name="author" placeholder="Author" required>
+            <select name="category" required>
+              <option value="">Select Genre</option>
+              <?php foreach ($genre_options as $genre_option): ?>
+                <option value="<?php echo htmlspecialchars($genre_option); ?>"><?php echo htmlspecialchars($genre_option); ?></option>
+              <?php endforeach; ?>
+            </select>
+            <textarea name="description" placeholder="Description" required></textarea>
+            <input type="file" name="cover_image" accept="image/*" required>
+            <button type="submit" name="add_book">Add Book</button>
+          </form>
+        </div>
       </section>
-
       <!-- Book Display Section -->
       <div class="book-section">
         <?php while ($cat = mysqli_fetch_assoc($category_result)):
@@ -473,7 +508,6 @@ if (!$category_result) {
           $stmt->execute();
           $books_result = $stmt->get_result();
         ?>
-
           <h3><?php echo htmlspecialchars($category); ?></h3>
           <div class="book-row">
             <?php while ($book = mysqli_fetch_assoc($books_result)): ?>
@@ -482,16 +516,22 @@ if (!$category_result) {
                   alt="<?php echo htmlspecialchars($book['title']); ?>"
                   class="book-cover"
                   onclick="openEditModal(<?php echo $book['id']; ?>)">
+                <div class="book-item-actions">
+                  <button type="button" class="edit-btn" onclick="openEditModal(<?php echo $book['id']; ?>)">Edit</button>
+                  <form id="delete-form-<?php echo $book['id']; ?>" method="POST" action="" style="margin:0;">
+                    <input type="hidden" name="delete_book" value="1">
+                    <input type="hidden" name="book_id" value="<?php echo $book['id']; ?>">
+                    <button type="button" class="delete-btn" data-title="<?php echo htmlspecialchars($book['title'], ENT_QUOTES); ?>" onclick="confirmDelete(this.form, this.dataset.title)">Delete</button>
+                  </form>
+                </div>
                 <div class="book-title-overlay"><?php echo htmlspecialchars($book['title']); ?></div>
               </div>
             <?php endwhile; ?>
           </div>
-
         <?php endwhile; ?>
       </div>
     </main>
   </div>
-
   <!-- Edit Book Modal -->
   <?php if (isset($book_to_edit)): ?>
     <div class="modal-overlay" id="editModal">
@@ -501,7 +541,6 @@ if (!$category_result) {
           <img src="../Images/currently.png" alt="Icon" class="modal-icon">
           <h2>Edit Book</h2>
         </div>
-
         <!-- Manage Chapter Button
         <div style="text-align: right; margin-bottom: 15px;">
           <a href="manage-chapter.php?book_id="><button class="chapter-btn">Manage Chapter</button></a>
@@ -510,7 +549,6 @@ if (!$category_result) {
         <!-- Form Layout -->
         <form id="updateForm" class="modal-form" action="UpdateBook.php" method="POST" enctype="multipart/form-data">
           <input type="hidden" name="book_id" value="<?php echo $book_to_edit['id']; ?>">
-
           <div class="form-grid">
             <!-- Left Column -->
             <div class="left-column">
@@ -518,18 +556,29 @@ if (!$category_result) {
                 <label for="title">Book Title</label>
                 <input type="text" id="title" name="title" value="<?php echo htmlspecialchars($book_to_edit['title']); ?>" required>
               </div>
-
               <div class="form-group">
                 <label for="author">Author's Name</label>
                 <input type="text" id="author" name="author" value="<?php echo htmlspecialchars($book_to_edit['author']); ?>" required>
               </div>
-
               <div class="form-group">
                 <label for="genre">Category/Genre</label>
-                <input type="text" id="genre" name="genre" value="<?php echo htmlspecialchars($book_to_edit['category']); ?>" required>
+                <select id="genre" name="genre" required>
+                  <option value="">Select Genre</option>
+                  <?php
+                    $selected_genre = $book_to_edit['category'];
+                    $edit_genres = $genre_options;
+                    if (!in_array($selected_genre, $edit_genres, true)) {
+                      array_unshift($edit_genres, $selected_genre);
+                    }
+                    foreach ($edit_genres as $genre_option):
+                  ?>
+                    <option value="<?php echo htmlspecialchars($genre_option); ?>" <?php echo ($selected_genre === $genre_option) ? 'selected' : ''; ?>>
+                      <?php echo htmlspecialchars($genre_option); ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
               </div>
             </div>
-
             <!-- Right Column -->
             <div class="right-column">
               <div class="form-group icon-input">
@@ -537,14 +586,12 @@ if (!$category_result) {
                 <input type="file" id="cover" name="cover">
                 <img src="../Images/<?php echo htmlspecialchars($book_to_edit['cover_image']); ?>" alt="Current Cover" class="cover-icon" style="width: 80px; margin-top: 8px;">
               </div>
-
               <div class="form-group">
                 <label for="description">Description</label>
                 <textarea id="description" name="description" rows="3"><?php echo htmlspecialchars($book_to_edit['description']); ?></textarea>
               </div>
             </div>
           </div>
-
           <!-- Buttons -->
           <div class="button-group">
             <a href="AdminBookEdit.php" class="cancel-btn">Cancel</a>
@@ -572,7 +619,69 @@ if (!$category_result) {
         }
       });
     }
+    function confirmDelete(form, bookTitle) {
+      Swal.fire({
+        title: 'Delete book?',
+        text: 'This will permanently remove "' + bookTitle + '" from the library.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          form.submit();
+        }
+      });
+    }
+    function openAddModal() {
+      const modal = document.getElementById('addModal');
+      modal.style.display = 'flex';
+      modal.setAttribute('aria-hidden', 'false');
+    }
+    function closeAddModal() {
+      const modal = document.getElementById('addModal');
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+    }
+    document.addEventListener('click', function(event) {
+      const modal = document.getElementById('addModal');
+      if (modal && event.target === modal) {
+        closeAddModal();
+      }
+    });
   </script>
+  <?php if (isset($_GET['deleted']) && $_GET['deleted'] == 1): ?>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Book deleted successfully!',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
+      });
+    </script>
+  <?php endif; ?>
+  <?php if (isset($_GET['added']) && $_GET['added'] == 1): ?>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Book added successfully!',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
+      });
+    </script>
+  <?php endif; ?>
   <?php if (isset($_GET['success']) && $_GET['success'] == 1): ?>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -588,25 +697,19 @@ if (!$category_result) {
       });
     </script>
   <?php endif; ?>
-
-
-
   <script>
     function toggleSidebar() {
       const sidebar = document.getElementById("sidebar");
       sidebar.classList.toggle("collapsed");
     }
-
     function openEditModal(bookId) {
       // Redirect to the same page with edit_id parameter
       window.location.href = "AdminBookEdit.php?edit_id=" + bookId;
     }
-
     function closeModal() {
       // Remove the edit_id parameter from URL
       window.location.href = "AdminBookEdit.php";
     }
-
     // Close modal when clicking outside of it
     document.addEventListener('click', function(event) {
       const modal = document.getElementById('editModal');
@@ -614,13 +717,10 @@ if (!$category_result) {
         closeModal();
       }
     });
-
     // Prevent form resubmission when page is refreshed
     if (window.history.replaceState) {
       window.history.replaceState(null, null, window.location.href);
     }
   </script>
-
 </body>
-
 </html>

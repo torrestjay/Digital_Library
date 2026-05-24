@@ -1,0 +1,163 @@
+---- SettingAdmin.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\SettingAdmin.php
+---- accessibility.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\accessibility.php
+---- admin/AdminBookEdit.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\admin\AdminBookEdit.php
+---- dbcon.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\dbcon.php
+---- index.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\index.php
+---- login.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\login.php
+---- logout.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\logout.php
+---- studentpage/SettingAdmin.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\SettingAdmin.php
+---- studentpage/admin/AdminBookEdit.php
+PHP Parse error:  syntax error, unexpected variable "$category" in C:\xampp\htdocs\Digital_Library\studentpage\admin\AdminBookEdit.php on line 1
+
+Parse error: syntax error, unexpected variable "$category" in C:\xampp\htdocs\Digital_Library\studentpage\admin\AdminBookEdit.php on line 1
+Errors parsing C:\xampp\htdocs\Digital_Library\studentpage\admin\AdminBookEdit.php
+---- studentpage/admin/AdminNotif.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\admin\AdminNotif.php
+---- studentpage/admin/AdminRules.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\admin\AdminRules.php
+---- studentpage/admin/AdminUserPage.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\admin\AdminUserPage.php
+---- studentpage/admin/Edit-Book-Modal.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\admin\Edit-Book-Modal.php
+---- studentpage/admin/SettingAdmin.php
+
+Parse error: syntax error, unexpected token "endif", expecting end of file in C:\xampp\htdocs\Digital_Library\studentpage\admin\SettingAdmin.php on line 1
+PHP Parse error:  syntax error, unexpected token "endif", expecting end of file in C:\xampp\htdocs\Digital_Library\studentpage\admin\SettingAdmin.php on line 1
+Errors parsing C:\xampp\htdocs\Digital_Library\studentpage\admin\SettingAdmin.php
+---- studentpage/admin/UpdateBook.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\admin\UpdateBook.php
+---- studentpage/admin/admindashboard.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\admin\admindashboard.php
+---- studentpage/admin/getDashboardData.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\admin\getDashboardData.php
+---- studentpage/admin/manage-chapter.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\admin\manage-chapter.php
+---- studentpage/admin/update_borrow_status.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\admin\update_borrow_status.php
+---- studentpage/database/db.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\database\db.php
+---- studentpage/database/process-signup.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\database\process-signup.php
+---- studentpage/database/register.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\database\register.php
+---- studentpage/dbcon.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\dbcon.php
+---- studentpage/user/Success-Released-Modal.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\Success-Released-Modal.php
+---- studentpage/user/UpdateBook.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\UpdateBook.php
+---- studentpage/user/borrow-book.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\borrow-book.php
+---- studentpage/user/borrow.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\borrow.php
+---- studentpage/user/borrow_rules.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\borrow_rules.php
+---- studentpage/user/borrowed-books.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\borrowed-books.php
+---- studentpage/user/contentpreference.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\contentpreference.php
+---- studentpage/user/favorite.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\favorite.php
+---- studentpage/user/get-book-details.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\get-book-details.php
+---- studentpage/user/homepage.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\homepage.php
+---- studentpage/user/increment_view.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\increment_view.php
+---- studentpage/user/librarypage.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\librarypage.php
+---- studentpage/user/load_default_books.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\load_default_books.php
+---- studentpage/user/notification.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\notification.php
+---- studentpage/user/profile.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\profile.php
+---- studentpage/user/read.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\read.php
+---- studentpage/user/request_extension.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\request_extension.php
+---- studentpage/user/return_book.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\return_book.php
+---- studentpage/user/search_books.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\search_books.php
+---- studentpage/user/setting.php
+
+Parse error: syntax error, unexpected token "endif", expecting end of file in C:\xampp\htdocs\Digital_Library\studentpage\user\setting.php on line 1
+Errors parsing C:\xampp\htdocs\Digital_Library\studentpage\user\setting.php
+PHP Parse error:  syntax error, unexpected token "endif", expecting end of file in C:\xampp\htdocs\Digital_Library\studentpage\user\setting.php on line 1
+---- studentpage/user/signup.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\signup.php
+---- studentpage/user/submit_borrow.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\submit_borrow.php
+---- studentpage/user/success-modal.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\success-modal.php
+---- studentpage/user/support.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\support.php
+---- studentpage/user/timeline.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\timeline.php
+---- studentpage/user/track&record.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\studentpage\user\track&record.php
+---- user/Book-Details.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\Book-Details.php
+---- user/Change-Email-Modal.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\Change-Email-Modal.php
+---- user/Change-Username-Modal.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\Change-Username-Modal.php
+---- user/Create-Password-Modal.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\Create-Password-Modal.php
+---- user/Edit Profile-Modal.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\Edit Profile-Modal.php
+---- user/Notification-Modal.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\Notification-Modal.php
+---- user/Read-Book.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\Read-Book.php
+---- user/Success-Released-Modal.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\Success-Released-Modal.php
+---- user/UpdateBook.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\UpdateBook.php
+---- user/borrow.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\borrow.php
+---- user/contentpreference.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\contentpreference.php
+---- user/favorite.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\favorite.php
+---- user/get-book-details.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\get-book-details.php
+---- user/homepage.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\homepage.php
+---- user/increment_view.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\increment_view.php
+---- user/librarypage.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\librarypage.php
+---- user/load_default_books.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\load_default_books.php
+---- user/notification.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\notification.php
+---- user/profile.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\profile.php
+---- user/read.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\read.php
+---- user/search_books.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\search_books.php
+---- user/setting.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\setting.php
+---- user/signup.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\signup.php
+---- user/submit_borrow.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\submit_borrow.php
+---- user/success-modal.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\success-modal.php
+---- user/support.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\support.php
+---- user/timeline.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\timeline.php
+---- user/track&record.php
+No syntax errors detected in C:\xampp\htdocs\Digital_Library\user\track&record.php

@@ -1,60 +1,138 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Book Modal</title>
-  <link rel="stylesheet" href="../css/try.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(180deg, #f8fbff 0%, #eef4fa 100%);
+      color: #14324a;
+    }
+    button { font: inherit; }
+    .trigger {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      background: linear-gradient(135deg, #0e3a5d, #1b678f);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 22px rgba(14, 58, 93, 0.18);
+    }
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(14, 58, 93, 0.24);
+      backdrop-filter: blur(10px);
+    }
+    .dialog {
+      width: min(980px, 100%);
+      position: relative;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 24px;
+      padding: 24px;
+      border-radius: 28px;
+      background: #fff;
+      border: 1px solid #e5edf5;
+      box-shadow: 0 18px 40px rgba(14, 58, 93, 0.16);
+    }
+    .close-btn {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 999px;
+      background: #eef4fa;
+      color: #0e3a5d;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .cover { width: 100%; aspect-ratio: 3 / 4; border-radius: 20px; object-fit: cover; background: #e8eff7; }
+    .eyebrow { margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.78rem; font-weight: 800; color: #1b678f; }
+    h1 { color: #0e3a5d; font-size: clamp(2rem, 4vw, 3rem); line-height: 1.05; }
+    .author { color: #5f7385; margin: 8px 0 18px; }
+    .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+    .stat { border: 1px solid #e5edf5; border-radius: 18px; padding: 14px; text-align: center; background: linear-gradient(180deg, #fbfdff 0%, #f7fbff 100%); }
+    .stat strong { display: block; color: #14324a; font-size: 1.2rem; margin-top: 4px; }
+    .buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+    .buttons button {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, #0e3a5d, #1b678f);
+      box-shadow: 0 10px 22px rgba(14, 58, 93, 0.18);
+    }
+    .desc h4 { color: #0e3a5d; margin-bottom: 10px; }
+    .desc p { line-height: 1.8; color: #5f7385; }
+    @media (max-width: 800px) {
+      .dialog { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-  <!-- Trigger Button -->
-  <button type="button" id="openModal">Open Book</button>
-
-  <!-- Modal Overlay -->
-  <div class="modal-overlay" id="modal">
-    <div class="book-modal">
-      <button type="button" class="close-btn" id="closeModal">&times;</button>
-
-      <div class="book-content">
-        <div class="book-image">
-          <img src="../images/gatsby.jpg" alt="The Great Gatsby" />
-          <div class="genre-tags">
-            <span>Romance</span>
-            <span>Fiction</span>
-          </div>
+  <button type="button" class="trigger" id="openModal">Open Book Preview</button>
+  <div class="overlay" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDescription">
+    <section class="dialog">
+      <button type="button" class="close-btn" id="closeModal" aria-label="Close dialog">&times;</button>
+      <div>
+        <img class="cover" src="studentpage/Images/gatsby.jpg" alt="The Great Gatsby cover">
+      </div>
+      <div>
+        <p class="eyebrow">Featured Book</p>
+        <h1 id="modalTitle">The Great Gatsby</h1>
+        <p class="author">F. Scott Fitzgerald</p>
+        <div class="stats" aria-label="Book statistics">
+          <div class="stat"><span>Reads</span><strong>15.5M</strong></div>
+          <div class="stat"><span>Votes</span><strong>400K</strong></div>
+          <div class="stat"><span>Parts</span><strong>15</strong></div>
         </div>
-
-        <div class="book-details">
-          <h1>The Great Gatsby</h1>
-          <h3>F. Scott Fitzgerald</h3>
-
-          <div class="book-stats">
-            <div><strong>15.5M</strong><br>Reads</div>
-            <div><strong>400K</strong><br>Votes</div>
-            <div><strong>15</strong><br>Parts</div>
-          </div>
-
-          <div class="book-buttons">
-            <button type="button" class="read-btn">Read</button>
-            <button type="button" class="favorite-btn">Favorite</button>
-          </div>
-
-          <h4>Description:</h4>
-          <p>
-            A novel of mystery and tragedy, <em>The Great Gatsby</em> explores the American Dream through the story of Jay Gatsby and his unrelenting love for Daisy Buchanan.
-          </p>
+        <div class="buttons">
+          <button type="button">Read Now</button>
+          <button type="button">Add to Favorites</button>
+        </div>
+        <div class="desc">
+          <h4>Publisher's Description:</h4>
+          <p id="modalDescription">A novel of mystery and tragedy, The Great Gatsby explores the American Dream through the story of Jay Gatsby and his unrelenting love for Daisy Buchanan.</p>
         </div>
       </div>
-    </div>
+    </section>
   </div>
-
   <script>
-    document.getElementById("openModal").addEventListener("click", () => {
-      document.getElementById("modal").style.display = "flex";
+    const modal = document.getElementById('modal');
+    const openButton = document.getElementById('openModal');
+    const closeButton = document.getElementById('closeModal');
+    function openDialog() {
+      modal.style.display = 'flex';
+      closeButton.focus();
+    }
+    function closeDialog() {
+      modal.style.display = 'none';
+      openButton.focus();
+    }
+    openButton.addEventListener('click', openDialog);
+    closeButton.addEventListener('click', closeDialog);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) closeDialog();
     });
-
-    document.getElementById("closeModal").addEventListener("click", () => {
-      document.getElementById("modal").style.display = "none";
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && modal.style.display === 'flex') closeDialog();
     });
   </script>
 </body>

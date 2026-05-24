@@ -1,6 +1,5 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,14 +11,11 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
     * {
       font-family: 'Poppins', sans-serif;
-
     }
   </style>
 </head>
-
 <body>
   <div class="container">
     <aside class="sidebar" id="sidebar">
@@ -36,7 +32,6 @@
         <a href="../logout.php" onclick="toggleSidebar()"><img class="icon" src="../Images/signout.png" alt="Signout Icon" /><span>Sign Out</span></a>
       </div>
     </aside>
-
     <main class="main-content">
       <header class="header">
         <div class="spacer"></div>
@@ -45,7 +40,6 @@
           <a href="SettingAdmin.php"><img class="icon" src="../Images/profile.png"></a>
         </div>
       </header>
-
       <div class="users-content">
         <h2 class="section-title">USERS</h2>
         <!-- Add this above your table -->
@@ -88,8 +82,6 @@
               <?php
               // Database connection
               include "../dbcon.php";
-
-
               // Join query to fetch users who borrowed books
               $query = "SELECT 
                           u.id, 
@@ -108,9 +100,7 @@
                         JOIN books b ON bb.book_id = b.id
                         WHERE u.role = 'student'
                         ORDER BY bb.borrow_date DESC";
-
               $result = $conn->query($query);
-
               if ($result->num_rows > 0) {
                 while ($row = $result->fetch_assoc()) {
                   echo "<tr data-borrow-id='" . $row['borrow_id'] . "'>
@@ -122,7 +112,6 @@
                               <td>" . htmlspecialchars($row['return_date'] ? $row['return_date'] : 'Not returned') . "</td>
                               <td class='status-cell'>" . htmlspecialchars(ucfirst($row['borrow_status'])) . "</td>
                               <td class='action-cell'>";
-
                   // Action buttons based on status
                   if ($row['borrow_status'] == 'pending') {
                     echo "<button type='button' class='approve-btn' onclick='approveRequest(" . $row['borrow_id'] . ")'>Approve</button>
@@ -132,14 +121,12 @@
                   } else {
                     echo "-";
                   }
-
                   echo "</td>
                             </tr>";
                 }
               } else {
                 echo "<tr><td colspan='9'>No borrowing records found</td></tr>";
               }
-
               $conn->close();
               ?>
             </tbody>
@@ -148,26 +135,21 @@
       </div>
     </main>
   </div>
-
   <script>
     function toggleSidebar() {
       const sidebar = document.getElementById("sidebar");
       sidebar.classList.toggle("collapsed");
     }
-
     function approveRequest(borrowId) {
       updateStatus(borrowId, 'borrowed');
     }
-
     function rejectRequest(borrowId) {
       updateStatus(borrowId, 'rejected');
     }
-
     function markAsReturned(borrowId, bookId) {
       // First update the status to returned
       updateStatus(borrowId, 'returned', bookId);
     }
-
     function updateStatus(borrowId, newStatus, bookId = null) {
       // First show confirmation dialog
       let confirmConfig = {
@@ -177,7 +159,6 @@
         cancelButtonColor: '#d33',
         confirmButtonText: 'Yes, proceed!'
       };
-
       // Customize messages based on action type
       switch (newStatus) {
         case 'borrowed':
@@ -199,7 +180,6 @@
           confirmConfig.text = "You're about to update this record's status.";
           confirmConfig.icon = 'info';
       }
-
       Swal.fire(confirmConfig).then((result) => {
         if (result.isConfirmed) {
           // User confirmed - proceed with the update
@@ -209,7 +189,6 @@
           if (bookId) {
             formData.append('book_id', bookId);
           }
-
           // Show loading indicator
           Swal.fire({
             title: 'Processing...',
@@ -219,7 +198,6 @@
               Swal.showLoading();
             }
           });
-
           fetch('update_borrow_status.php', {
               method: 'POST',
               body: formData
@@ -227,18 +205,15 @@
             .then(response => response.json())
             .then(data => {
               Swal.close(); // Close loading dialog
-
               if (data.success) {
                 // Find the row in the table
                 const row = document.querySelector(`tr[data-borrow-id="${borrowId}"]`);
-
                 if (row) {
                   // Update status cell
                   const statusCell = row.querySelector('.status-cell');
                   if (statusCell) {
                     statusCell.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
                   }
-
                   // Update action cell
                   const actionCell = row.querySelector('.action-cell');
                   if (actionCell) {
@@ -248,7 +223,6 @@
                       actionCell.innerHTML = '-';
                     }
                   }
-
                   // Update return date if marked as returned
                   if (newStatus === 'returned') {
                     const returnDateCell = row.cells[5]; // 6th cell (0-based index)
@@ -258,7 +232,6 @@
                     }
                   }
                 }
-
                 // Show success message
                 Swal.fire({
                   title: 'Success!',
@@ -300,22 +273,18 @@
       const statusFilter = document.getElementById('status-filter');
       const resetBtn = document.getElementById('reset-filters');
       const tableRows = document.querySelectorAll('tbody tr');
-
       // Filter function
       function applyFilters() {
         const nameValue = nameFilter.value.toLowerCase();
         const bookValue = bookFilter.value.toLowerCase();
         const statusValue = statusFilter.value.toLowerCase();
-
         tableRows.forEach(row => {
           const name = row.cells[0].textContent.toLowerCase();
           const book = row.cells[2].textContent.toLowerCase();
           const status = row.cells[6].textContent.toLowerCase();
-
           const nameMatch = name.includes(nameValue);
           const bookMatch = book.includes(bookValue);
           const statusMatch = statusValue === '' || status === statusValue;
-
           if (nameMatch && bookMatch && statusMatch) {
             row.style.display = '';
             row.classList.add('filter-match');
@@ -325,12 +294,10 @@
           }
         });
       }
-
       // Event listeners
       nameFilter.addEventListener('input', applyFilters);
       bookFilter.addEventListener('input', applyFilters);
       statusFilter.addEventListener('change', applyFilters);
-
       // Reset filters
       resetBtn.addEventListener('click', function() {
         nameFilter.value = '';
@@ -341,11 +308,9 @@
           row.classList.remove('filter-match');
         });
       });
-
       // Initialize filters
       applyFilters();
     });
   </script>
 </body>
-
 </html>

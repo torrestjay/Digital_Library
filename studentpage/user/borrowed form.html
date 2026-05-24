@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -6,44 +6,42 @@
   <link rel="stylesheet" href="../css/borrowed form.css">
 </head>
 <body>
-  <div class="modal-overlay">
-    <div class="form-container">
+  <main class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="borrowFormTitle" aria-describedby="borrowFormDesc">
+    <section class="form-container">
       <img src="../Images/logo.png" alt="Readly Logo" class="logo">
-      <h2>Fill up the following</h2>
+      <p style="letter-spacing: 0.12em; text-transform: uppercase; color: #1b678f; font-weight: 700; margin-top: 8px;">Borrow Request</p>
+      <h2 id="borrowFormTitle">Fill in the details below</h2>
+      <p id="borrowFormDesc" style="color: #5f7385; margin-bottom: 20px; line-height: 1.7;">Use this form to submit your borrowing information before the request is reviewed.</p>
       <form action="#" method="POST">
         <div class="form-group">
           <label for="userId">User ID</label>
-          <input type="text" id="userId" name="userId">
+          <input type="text" id="userId" name="userId" autocomplete="username">
         </div>
-
         <div class="form-group">
           <label for="email">Email</label>
-          <input type="email" id="email" name="email">
+          <input type="email" id="email" name="email" autocomplete="email">
         </div>
-
         <div class="form-group">
           <label for="bookTitle">Book Title</label>
-          <input type="text" id="bookTitle" name="bookTitle">
+          <input type="text" id="bookTitle" name="bookTitle" readonly>
         </div>
-
         <div class="form-row">
           <div class="form-group">
-            <label for="date">Date</label>
+            <label for="date">Borrow Date</label>
             <input type="date" id="date" name="date">
           </div>
-
           <div class="form-group">
             <label for="contact">Contact</label>
-            <input type="tel" id="contact" name="contact">
+            <input type="tel" id="contact" name="contact" autocomplete="tel">
           </div>
         </div>
-
+        <p style="font-size: 0.88rem; color: #5f7385; margin-bottom: 18px;">Borrowed books are tracked automatically. Returned books can be requested again later.</p>
         <div class="buttons">
-          <button type="submit">SUBMIT</button>
-          <button type="reset">CANCEL</button>
+          <button type="submit">Submit Request</button>
+          <button type="reset">Clear Form</button>
         </div>
       </form>
-    </div>
-  </div>
+    </section>
+  </main>
 </body>
 </html>

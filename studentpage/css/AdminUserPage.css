@@ -1,20 +1,19 @@
-* {
+﻿* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-
 body, html {
   height: 100%;
   font-family: sans-serif;
-  background-color: #f9f7f4;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4fa 100%);
+  color: #14324a;
+  overflow-x: hidden;
 }
-
 .container {
   display: flex;
   height: 100vh;
 }
-
 /* Sidebar layout */
 .sidebar {
   background-color: #0e3a5d;
@@ -24,11 +23,9 @@ body, html {
   flex-direction: column;
   transition: width 0.3s ease;
 }
-
 .sidebar.collapsed {
   width: 70px;
 }
-
 /* Logo */
 .logo {
   height: 70px;
@@ -38,13 +35,11 @@ body, html {
   cursor: pointer;
   padding: 10px 10px;
 }
-
 .logo img {
   width: 50px;
   height: 50px;
   border-radius: 50%;
 }
-
 /* Navigation */
 .nav {
   flex-grow: 1;
@@ -52,7 +47,6 @@ body, html {
   flex-direction: column;
   padding-top: 20px;
 }
-
 .nav a,
 .sign-out a {
   display: flex;
@@ -62,42 +56,36 @@ body, html {
   text-decoration: none;
   transition: background 0.2s;
 }
-
 .nav a:hover,
 .sign-out a:hover {
   background-color: #12476f;
 }
-
 .nav .icon,
 .sign-out .icon {
   width: 25px;
   height: 25px;
   margin-right: 10px;
 }
-
 .nav span,
 .sign-out span {
   margin-left: 10px;
   white-space: nowrap;
 }
-
 .sidebar.collapsed span {
   display: none;
 }
-
 .sign-out {
   margin-top: auto;
 }
-
 /* Main content */
 .main-content {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  background-color: #f5f5f5;
+  background-color: transparent;
   overflow-y: auto;
+  overflow-x: hidden;
 }
-
 .header {
   padding: 12px 12px;
   background-color: #ffffff;
@@ -106,7 +94,6 @@ body, html {
   align-items: center;
   border-bottom: 1px solid #ccc;
 }
-
 .header-icons .icon {
   margin-left: 10px;
   cursor: pointer;
@@ -121,7 +108,6 @@ body, html {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   margin: 20px;
 }
-
 .section-title {
   font-size: 24px;
   font-weight: 600;
@@ -130,7 +116,6 @@ body, html {
   position: relative;
   padding-bottom: 10px;
 }
-
 .section-title::after {
   content: '';
   position: absolute;
@@ -138,27 +123,25 @@ body, html {
   bottom: 0;
   width: 60px;
   height: 3px;
-  background-color: #3498db;
+  background-color: #1b678f;
 }
-
 .users-table {
-  overflow-x: auto;
+  overflow-x: hidden;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
-
 .users-table table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  min-width: 1000px;
+  min-width: 0;
+  table-layout: fixed;
   background-color: #fff;
   border-radius: 8px;
   overflow: hidden;
 }
-
 .users-table th {
-  background-color: #3498db;
+  background-color: #1b678f;
   color: white;
   font-weight: 600;
   text-align: left;
@@ -169,19 +152,17 @@ body, html {
   position: sticky;
   top: 0;
 }
-
 .users-table td {
   padding: 14px 18px;
   border-bottom: 1px solid #ecf0f1;
   color: #34495e;
   font-size: 14px;
   transition: background-color 0.2s ease;
+  overflow-wrap: anywhere;
 }
-
 .users-table tr:last-child td {
   border-bottom: none;
 }
-
 /* Column Alignment */
 .users-table td:nth-child(4),
 .users-table td:nth-child(5),
@@ -190,7 +171,6 @@ body, html {
 .users-table td:nth-child(8) {
   text-align: center;
 }
-
 /* Status Styling */
 .status-cell {
   font-weight: 600;
@@ -200,32 +180,26 @@ body, html {
   display: inline-block;
   font-size: 13px;
 }
-
 .status-cell[data-status="pending"] {
   background-color: #fff3cd;
   color: #856404;
 }
-
 .status-cell[data-status="borrowed"] {
   background-color: #cce5ff;
   color: #004085;
 }
-
 .status-cell[data-status="returned"] {
-  background-color: #d4edda;
-  color: #155724;
+  background-color: #d6ecff;
+  color: #0e3a5d;
 }
-
 .status-cell[data-status="rejected"] {
   background-color: #f8d7da;
   color: #721c24;
 }
-
 /* Action Buttons */
 .action-cell {
   white-space: nowrap;
 }
-
 .approve-btn, 
 .reject-btn, 
 .return-btn {
@@ -239,40 +213,33 @@ body, html {
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-
 .approve-btn {
-  background-color: #2ecc71;
+  background-color: #1b678f;
   color: white;
 }
-
 .approve-btn:hover {
-  background-color: #27ae60;
+  background-color: #15597c;
   transform: translateY(-1px);
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
-
 .reject-btn {
   background-color: #e74c3c;
   color: white;
 }
-
 .reject-btn:hover {
   background-color: #c0392b;
   transform: translateY(-1px);
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
-
 .return-btn {
-  background-color: #3498db;
+  background-color: #1b678f;
   color: white;
 }
-
 .return-btn:hover {
-  background-color: #2980b9;
+  background-color: #15597c;
   transform: translateY(-1px);
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
-
 /* Date Styling */
 .users-table td:nth-child(4),
 .users-table td:nth-child(5),
@@ -281,12 +248,10 @@ body, html {
   font-size: 13px;
   color: #7f8c8d;
 }
-
 /* Hover Effects */
 .users-table tr:hover td {
   background-color: #f8fafc;
 }
-
 /* Responsive Design */
 @media (max-width: 1200px) {
   .users-content {
@@ -298,7 +263,6 @@ body, html {
     padding: 12px 15px;
   }
 }
-
 @media (max-width: 768px) {
   .section-title {
     font-size: 20px;
@@ -327,7 +291,6 @@ body, html {
     white-space: normal;
   }
 }
-
 /* Add this to your CSS */
 .table-filters {
   display: flex;
@@ -336,18 +299,15 @@ body, html {
   flex-wrap: wrap;
   align-items: flex-end;
 }
-
 .filter-group {
   display: flex;
   flex-direction: column;
 }
-
 .filter-group label {
   margin-bottom: 5px;
   font-weight: 500;
   font-size: 14px;
 }
-
 .table-filters input, 
 .table-filters select {
   padding: 8px 12px;
@@ -355,7 +315,6 @@ body, html {
   border-radius: 4px;
   min-width: 180px;
 }
-
 .filter-btn {
   padding: 8px 16px;
   background-color: #0e3a5d;
@@ -365,11 +324,9 @@ body, html {
   cursor: pointer;
   transition: background-color 0.2s;
 }
-
 .filter-btn:hover {
   background-color: #12476f;
 }
-
 /* Highlight filtered rows */
 tr.filter-match {
   background-color: #f8f9fa !important;

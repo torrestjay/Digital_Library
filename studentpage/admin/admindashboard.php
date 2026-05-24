@@ -1,20 +1,22 @@
-<?php
+﻿<?php
 session_start();
-include('..\dbcon.php');
+include('../dbcon.php');
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ..\login.php");
+    header("Location: ../login.php");
     exit();
 }
-
 $user_id = $_SESSION['user_id'];
-$query = "SELECT * FROM users WHERE id = $user_id LIMIT 1";
-$result = mysqli_query($conn, $query);
-$user = mysqli_fetch_assoc($result);
-
+$user_stmt = $conn->prepare('SELECT id, fullname FROM users WHERE id = ? LIMIT 1');
+$user_stmt->bind_param('i', $user_id);
+$user_stmt->execute();
+$user = $user_stmt->get_result()->fetch_assoc();
+$user_stmt->close();
+if (!$user) {
+  header('Location: ../login.php');
+  exit();
+}
 $user_name = $user['fullname'];
-
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,7 +34,6 @@ $user_name = $user['fullname'];
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
     *{
       font-family: 'Poppins', sans-serif;
-
     }
     #toastBox {
         position: fixed;
@@ -43,7 +44,6 @@ $user_name = $user['fullname'];
         flex-direction: column;
         gap: 10px;
     }
-
     .toast {
         background-color: #0e3a5d;
         color: white;
@@ -56,11 +56,9 @@ $user_name = $user['fullname'];
         gap: 10px;
         animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
     }
-
     .toast.error {
         background-color: #e74c3c;
     }
-
     @keyframes slideIn {
         from {
             opacity: 0;
@@ -71,7 +69,6 @@ $user_name = $user['fullname'];
             transform: translateX(0);
         }
     }
-
     @keyframes fadeOut {
         to {
             opacity: 0;
@@ -97,7 +94,6 @@ $user_name = $user['fullname'];
         <a href="../logout.php" onclick="toggleSidebar()"><img class="icon" src="../Images/signout.png" alt="Signout Icon" /><span>Sign Out</span></a>
       </div>
     </aside>
-
     <main class="main-content">
       <header class="header">
         <div class="spacer"></div>
@@ -105,28 +101,23 @@ $user_name = $user['fullname'];
           <a href="SettingAdmin.php"><img class="icon" src="../Images/profile.png"></a>
         </div>
       </header>
-
       <section class="dashboard">
         <h2 class="dashboard-title">Hello, Admin! <span class="date-time" id="currentDateTime"></span></h2>
-
         <div class="dashboard-cards">
           <div class="card">
             <h3>Books Statistics</h3>
             <canvas id="booksChart"></canvas>
             <p class="card-footer" id="booksFooter"></p>
           </div>
-
           <div class="card">
             <h3>Borrowing Status</h3>
             <canvas id="borrowingChart"></canvas>
             <div id="borrowingStats"></div>
           </div>
-
           <div class="card wide">
             <h3>Monthly Activity</h3>
             <canvas id="activityChart" height="200"></canvas>
           </div>
-
           <div class="card users">
             <h3>Top Users</h3>
             <ul id="topUsersList">
@@ -137,14 +128,12 @@ $user_name = $user['fullname'];
       </section>
     </main>
   </div>
-
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
     function toggleSidebar() {
       const sidebar = document.getElementById("sidebar");
       sidebar.classList.toggle("collapsed");
     }
-
     // Update current date and time
     function updateDateTime() {
       const now = new Date();
@@ -160,12 +149,10 @@ $user_name = $user['fullname'];
     }
     updateDateTime();
     setInterval(updateDateTime, 60000); // Update every minute
-
     // Fetch data and initialize charts
     document.addEventListener('DOMContentLoaded', function() {
       fetchDashboardData();
     });
-
     async function fetchDashboardData() {
       try {
         const response = await fetch('getDashboardData.php');
@@ -177,17 +164,14 @@ $user_name = $user['fullname'];
           document.getElementById('booksFooter').innerHTML = 
             `Total books: ${data.totalBooks} &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
              Available: ${data.availableBooks}`;
-
           // Update borrowing stats
           createBorrowingChart(data.borrowingData);
           document.getElementById('borrowingStats').innerHTML = `
             <p><strong>${data.pendingRequests}</strong> Pending Borrow Request</p>
             <p><strong class="overdue">${data.overdueReturns}</strong> Overdue Returns</p>
           `;
-
           // Update monthly activity
           createActivityChart(data.monthlyActivity);
-
           // Update top users
           const topUsersList = document.getElementById('topUsersList');
             topUsersList.innerHTML = data.topUsers.map((user, index) => `
@@ -205,7 +189,6 @@ $user_name = $user['fullname'];
         Swal.fire('Error', 'An error occurred while loading data', 'error');
       }
     }
-
     function createBooksChart(data) {
       const ctx = document.getElementById('booksChart').getContext('2d');
       new Chart(ctx, {
@@ -232,7 +215,6 @@ $user_name = $user['fullname'];
         }
       });
     }
-
     function createBorrowingChart(data) {
       const ctx = document.getElementById('borrowingChart').getContext('2d');
       new Chart(ctx, {
@@ -266,7 +248,6 @@ $user_name = $user['fullname'];
         }
       });
     }
-
     function createActivityChart(data) {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       const currentMonth = new Date().getMonth();
@@ -316,26 +297,21 @@ $user_name = $user['fullname'];
     let userr_name = <?php echo json_encode($user_name); ?>;
     let toastBox = document.getElementById('toastBox');
     let successMess = '<i class="fa-solid fa-circle-check"></i> Welcome ' + userr_name + '!';
-
       function showToast(msg) {
           let toast = document.createElement('div'); 
           toast.classList.add('toast');
           toast.innerHTML = msg;
           toastBox.appendChild(toast); 
-
           if (msg.includes('error')) {
               toast.classList.add('error');
           }
-
           // Play notification sound
           const sound = document.getElementById('notifySound');
           if (sound) sound.play();
-
           setTimeout(() => {
               toast.remove();
           }, 3000);
       }
-
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('status') === 'success') {
           showToast(successMess);

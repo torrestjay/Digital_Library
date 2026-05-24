@@ -1,6 +1,5 @@
-<div id="accessibility-panel">
+﻿<div id="accessibility-panel">
   <h3 style="margin-top: 0; color: #0e3a5d; font-family: sans-serif; font-size: 14px; font-weight: 600; margin-bottom: 10px;">Accessibility Settings</h3>
-
   <div class="acc-controls" style="margin-bottom: 12px;">
     <button type="button" onclick="increaseFont()">A+</button>
     <button type="button" onclick="decreaseFont()">A-</button>
@@ -8,9 +7,7 @@
     <button type="button" onclick="toggleContrast()">High Contrast</button>
     <button type="button" onclick="toggleDyslexia()">Dyslexia Font</button>
   </div>
-
   <hr style="border: 0; border-top: 1px solid #ddd; margin: 12px 0;">
-
   <h3 style="color: #0e3a5d; font-family: sans-serif; font-size: 14px; font-weight: 600; margin-bottom: 8px;">Smart Audio Reader</h3>
   <div class="audio-controls">
     <button type="button" onclick="startAudioReading()">▶ Play / Resume</button>

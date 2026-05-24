@@ -1,4 +1,4 @@
-/* Modal Background */
+﻿/* Modal Background */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -12,7 +12,6 @@
   padding-top: 80px;
   z-index: 1000;
 }
-
 /* Modal Box */
 .modal-box {
   background: #fff;
@@ -23,21 +22,18 @@
   font-family: 'Segoe UI', sans-serif;
   width: 400px;
 }
-
 /* Check Icon */
 .check-icon {
   width: 60px;
   height: 60px;
   margin-bottom: 20px;
 }
-
 /* Title */
 .modal-box h2 {
-  color: #073b4c;
+  color: #0e3a5d;
   margin-bottom: 10px;
   font-size: 20px;
 }
-
 /* Book Title Text */
 .book-title {
   font-size: 16px;

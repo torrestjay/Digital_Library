@@ -1,8 +1,6 @@
-<?php
+﻿<?php
 include "../dbcon.php";
-
 header('Content-Type: application/json');
-
 try {
     // Get books statistics
     $booksQuery = "SELECT 
@@ -12,7 +10,6 @@ try {
                   FROM books";
     $booksResult = $conn->query($booksQuery);
     $booksData = $booksResult->fetch_assoc();
-
     // Get borrowing statistics
     $borrowingQuery = "SELECT 
                         SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
@@ -22,7 +19,6 @@ try {
                       FROM borrowed_books";
     $borrowingResult = $conn->query($borrowingQuery);
     $borrowingData = $borrowingResult->fetch_assoc();
-
     // Get monthly activity
     $monthlyActivity = [
         'borrowed' => array_fill(0, 12, 0),
@@ -57,7 +53,6 @@ try {
             $monthlyActivity['returned'][$monthIndex] = (int)$row['count'];
         }
     }
-
     // Get top users
     $topUsersQuery = "SELECT 
                         u.id, u.fullname, 
@@ -73,7 +68,6 @@ try {
     while ($row = $topUsersResult->fetch_assoc()) {
         $topUsers[] = $row;
     }
-
     echo json_encode([
         'success' => true,
         'booksData' => [
@@ -89,13 +83,11 @@ try {
         'monthlyActivity' => $monthlyActivity,
         'topUsers' => $topUsers
     ]);
-
 } catch (Exception $e) {
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()
     ]);
 }
-
 $conn->close();
 ?>

@@ -1,14 +1,13 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>The Greate Gatsby Modal</title>
+  <title>The Great Gatsby Modal</title>
   <link rel="stylesheet" href="../css/modal.css">
 </head>
 <body>
-
-  <div class="book-modal">
+  <section class="book-modal" role="dialog" aria-modal="true" aria-labelledby="gatsbyTitle" aria-describedby="gatsbyDesc">
     <div class="modal-content">
       <div class="left">
         <img src="../images/gatsby.jpg" alt="The Great Gatsby Cover" class="book-cover">
@@ -17,11 +16,11 @@
           <span class="tag">Fiction</span>
         </div>
       </div>
-
       <div class="right">
-        <h1>THE GREATE GATSBY</h1>
+        <p style="letter-spacing: 0.12em; text-transform: uppercase; color: #1b678f; font-weight: 700; margin-bottom: 8px;">Featured Story</p>
+        <h1 id="gatsbyTitle">The Great Gatsby</h1>
         <p class="author">F. Scott Fitzgerald</p>
-
+        <p id="gatsbyDesc" style="color: #5f7385; margin: 8px 0 18px; line-height: 1.7;">A refined preview card for the book details dialog, styled to match the blue library theme.</p>
         <div class="stats">
           <div class="stat">
             <p>👁️ Reads</p>
@@ -36,21 +35,18 @@
             <strong>15</strong>
           </div>
         </div>
-
         <div class="buttons">
-          <button class="read">READ</button>
-          <button class="favorite">FAVORITE</button>
+          <button type="button" class="read">Read Now</button>
+          <button type="button" class="favorite">Add to Favorites</button>
         </div>
-
         <div class="description">
           <h3>Publisher's Description:</h3>
           <p>
-            Paulo Coelho’s The Alchemist is a modern classic that has inspired a global audience with its powerful message about pursuing one’s dreams. This enchanting novel tells the mystical story of Santiago, a young Andalusian shepherd boy who longs to travel in search of a worldly treasure as extravagant as any ever found. From the Spanish countryside to the Egyptian desert, Santiago follows his heart and meets a series of characters—each guiding him closer to discovering not only the treasure he seeks, but also the wisdom of listening to one's own soul. Rich with symbolism and rooted in philosophy and spirituality, The Alchemist is a timeless fable about self-discovery, faith, and the transformative power of our dreams.
+            The Great Gatsby captures ambition, illusion, and longing through the story of Jay Gatsby and Daisy Buchanan. This demo page keeps the same premium visual language used across the library.
           </p>
         </div>
       </div>
     </div>
-  </div>
-
+  </section>
 </body>
 </html>

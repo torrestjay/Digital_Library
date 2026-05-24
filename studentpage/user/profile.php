@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -15,16 +15,15 @@
       <nav class="nav">
         <a href="homepage.php" onclick="toggleSidebar()"><img class="icon" src="../Images/dashboard.png" alt="Dashboard Icon" /><span>Dashboard</span></a>
         <a href="librarypage.php" onclick="toggleSidebar()"><img class="icon" src="../Images/Library.png" alt="Library Icon" /><span>Library</span></a>
-        <a href="Book-Details.php" onclick="toggleSidebar()"><img class="icon" src="../Images/Details.png" alt="Details Icon" /><span>Book Details</span></a>
+        <a href="borrowed-books.php" onclick="toggleSidebar()"><img class="icon" src="../Images/borrowed.png" alt="Borrowed Books Icon" /><span>Borrowed Books</span></a>
         <a href="track&record.php" onclick="toggleSidebar()"><img class="icon" src="../Images/Track.png" alt="Track Icon" /><span>Track and Record</span></a>
         <a href="support.php" onclick="toggleSidebar()"><img class="icon" src="../Images/Support.png" alt="Support Icon" /><span>Support Page</span></a>
         <a href="setting.php" onclick="toggleSidebar()"><img class="icon" src="../Images/settings.png" alt="Settings Icon" /><span>Settings</span></a>       
       </nav>
       <div class="sign-out">
-       <a href="../logout.php"><img class="icon" src="../Images\signout.png" alt="Signout Icon" /><span>Sign Out</span></a>
+      <a href="../logout.php"><img class="icon" src="../Images/signout.png" alt="Signout Icon" /><span>Sign Out</span></a>
       </div>
     </aside>
-
     <main class="main-content">
       <header class="header">
         <div class="spacer"></div>
@@ -33,7 +32,6 @@
           <img class="icon" src="../Images/profile.png" />
         </div>
       </header>
-
       <section class="profile-container">
         <div class="profile-header">
           <img src="../Images/Photo.png" alt="Profile" class="avatar" />
@@ -43,7 +41,6 @@
             <p>ID: K3456778909K</p>
           </div>
         </div>
-
         <!-- ✅ UPDATED SECTION BELOW -->
         <div class="profile-tabs">
           <div class="left-tabs">
@@ -52,7 +49,6 @@
           </div>
           <button class="edit-btn">Edit Profile</button>
         </div>
-
         <div class="profile-card">
           <h3>Joined</h3>
           <p>August 14, 2024</p>
@@ -60,7 +56,6 @@
       </section>
     </main>
   </div>
-
   <script>
     function toggleSidebar() {
       document.getElementById("sidebar").classList.toggle("collapsed");

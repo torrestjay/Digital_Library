@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -15,7 +15,7 @@
       <nav class="nav">
         <a href="homepage.php" onclick="toggleSidebar()"><img class="icon" src="../Images/dashboard.png" alt="Dashboard Icon" /><span>Dashboard</span></a>
         <a href="librarypage.php" onclick="toggleSidebar()"><img class="icon" src="../Images/Library.png" alt="Library Icon" /><span>Library</span></a>
-        <a href="Book-Details.php" onclick="toggleSidebar()"><img class="icon" src="../Images/Details.png" alt="Details Icon" /><span>Book Details</span></a>
+        <a href="borrowed-books.php" onclick="toggleSidebar()"><img class="icon" src="../Images/borrowed.png" alt="Borrowed Books Icon" /><span>Borrowed Books</span></a>
         <a href="track&record.php" onclick="toggleSidebar()"><img class="icon" src="../Images/Track.png" alt="Track Icon" /><span>Track and Record</span></a>
         <a href="support.php" onclick="toggleSidebar()"><img class="icon" src="../Images/Support.png" alt="Support Icon" /><span>Support Page</span></a>
         <a href="setting.php" onclick="toggleSidebar()"><img class="icon" src="../Images/settings.png" alt="Settings Icon" /><span>Settings</span></a>      
@@ -24,8 +24,6 @@
         <a href="../logout.php" onclick="toggleSidebar()"><img class="icon" src="../Images/signout.png" alt="Sign out Icon" /><span>Sign Out</span></a>
       </div>
     </aside>
-
-
        <main class="main-content">
             <header class="header">
                 <div class="spacer"></div>
@@ -34,11 +32,9 @@
                 <img class="icon" src="../Images/profile.png">
                 </div>
             </header>
-
             <section class="track-record-section">
   <h2>Track & Record</h2>
   <p class="subtext">Keep track of the books you've Borrowed and Read.</p>
-
   <div class="stats-cards">
     <div class="stat-card">
       <img src="../Images/borrowed.png" alt="Borrowed Books" />
@@ -68,12 +64,10 @@
       <p>You’ve read 15 out of 20 books this month.</p>
     </div>
   </div>
-
   <div class="tabs">
     <button type="button" class="active">Borrowed Book</button>
     <button type="button" class="active">Timeline</button>
   </div>
-
   <div class="content-grid">
     <table class="borrowed-table">
       <thead>
@@ -105,7 +99,6 @@
         </tr>
       </tbody>
     </table>
-
     <div class="borrow-log">
       <h4>Borrowed Book</h4>
       <p>Rated “The Night Circus”<br><span>04/15/2025</span></p>
@@ -114,7 +107,6 @@
     </div>
   </div>
 </section>
-
     </main>
   </div>
  
@@ -124,9 +116,5 @@
         sidebar.classList.toggle("collapsed");
     }
     </script>
-
-
 </body>
 </html>
-
-

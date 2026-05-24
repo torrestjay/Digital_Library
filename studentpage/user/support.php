@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -10,7 +10,6 @@
     *{
       
     font-family: 'Poppins', sans-serif;
-
     }
   </style>
 </head>
@@ -22,18 +21,17 @@
         <img src="../Images/logo.png" alt="Readly Logo" />
       </div>
       <nav class="nav">
-       <a href="homepage.php" onclick="toggleSidebar()"><img class="icon" src="../Images\dashboard.png" alt="Dashboard Icon" /><span>Dashboard</span></a>
-        <a href="librarypage.php" onclick="toggleSidebar()"><img class="icon" src="../Images\Library.png" alt="Library Icon" /><span>Library</span></a>
-        <a href="Book-Details.php" onclick="toggleSidebar()"><img class="icon" src="../Images\Details.png" alt="Details Icon" /><span>Book Details</span></a>
-        <a href="track&record.php" onclick="toggleSidebar()"><img class="icon" src="../Images\Track.png" alt="Track Icon" /><span>Track and Record</span></a>
-        <a href="support.php" onclick="toggleSidebar()"><img class="icon" src="../Images\Support.png" alt="Support Icon" /><span>Support Page</span></a>
-        <a href="setting.php" onclick="toggleSidebar()"><img class="icon" src="../Images\settings.png" alt="Settings Icon" /><span>Account Settings</span></a>       
+      <a href="homepage.php" onclick="toggleSidebar()"><img class="icon" src="../Images/dashboard.png" alt="Dashboard Icon" /><span>Dashboard</span></a>
+       <a href="librarypage.php" onclick="toggleSidebar()"><img class="icon" src="../Images/Library.png" alt="Library Icon" /><span>Library</span></a>
+        <a href="borrowed-books.php" onclick="toggleSidebar()"><img class="icon" src="../Images/borrowed.png" alt="Borrowed Books Icon" /><span>Borrowed Books</span></a>
+       <a href="track&record.php" onclick="toggleSidebar()"><img class="icon" src="../Images/Track.png" alt="Track Icon" /><span>Track and Record</span></a>
+       <a href="support.php" onclick="toggleSidebar()"><img class="icon" src="../Images/Support.png" alt="Support Icon" /><span>Support Page</span></a>
+       <a href="setting.php" onclick="toggleSidebar()"><img class="icon" src="../Images/settings.png" alt="Settings Icon" /><span>Account Settings</span></a>       
       </nav>
       <div class="sign-out">
-      <a href="../logout.php"><img class="icon" src="../Images\signout.png" alt="Signout Icon" /><span>Sign Out</span></a>
+      <a href="../logout.php"><img class="icon" src="../Images/signout.png" alt="Signout Icon" /><span>Sign Out</span></a>
       </div>
     </aside>
-
     
     <!-- Main Content -->
     <main class="main-content help-center">
@@ -44,7 +42,6 @@
           <a href="setting.php"><img class="icon" src="../Images/profile.png"></a> 
         </div>
       </header>
-
       <!-- Help Center Content -->
       <section class="help-search">
         <h1>HELP CENTER</h1>
@@ -60,7 +57,6 @@
           </div>
         </div>
       </section>
-
       <!-- FAQ Section -->
       <section class="faq-section">
         <h2>Frequently asked question</h2>
@@ -96,7 +92,6 @@
           <!-- Add more questions here if needed -->
         </div>
       </section>
-
       <!-- Contact Section -->
       <section class="contact-section">
         <div class="contact-form">
@@ -118,7 +113,6 @@
       </section>
     </main>
   </div>
-
   <script>
     function toggleSidebar() {
       const sidebar = document.getElementById("sidebar");

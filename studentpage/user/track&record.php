@@ -87,7 +87,9 @@ $borrowedBooksResult = $stmt->get_result();
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Track and Record</title>
+  <link rel="stylesheet" href="../css/design-system.css" />
   <link rel="stylesheet" href="../css/track&record.css" />
+  <link rel="stylesheet" href="../css/user-shell.css" />
   <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
   *{
@@ -108,18 +110,22 @@ $borrowedBooksResult = $stmt->get_result();
 /* Pagination Buttons */
 .pagination-buttons a {
   margin-left: 10px;
-  padding: 8px 14px;
+  padding: 0 20px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
   border: none;
-  background-color: #1b678f;
+  background: linear-gradient(135deg, #0e3a5d, #1b678f);
   color: #fff;
-  border-radius: 8px;
+  border-radius: 16px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   text-decoration: none;
-  display: inline-block;
+  font-weight: 600;
 }
 .pagination-buttons a:hover {
-  background-color: #15597c;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 32px rgba(14, 58, 93, 0.12);
 }
 /* Page Info Text */
 .admin-icon {

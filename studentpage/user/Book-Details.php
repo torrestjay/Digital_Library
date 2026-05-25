@@ -23,10 +23,7 @@ if (!$book) {
 $user_id = (int)$_SESSION['user_id'];
 $activeBorrow = get_active_borrow_record($conn, $user_id, $book_id);
 $canReadNow = $activeBorrow !== null;
-$recommendedStmt = $conn->prepare('SELECT id, title, author, category, description, cover_image FROM books WHERE id != ? ORDER BY RAND() LIMIT 6');
-$recommendedStmt->bind_param('i', $book_id);
-$recommendedStmt->execute();
-$recommended = $recommendedStmt->get_result();
+
 function cover_src($cover_image)
 {
     $clean = trim((string)$cover_image);
@@ -51,283 +48,557 @@ function safe_excerpt($value, $length = 180)
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title><?php echo safe_text($book['title']); ?> - Book Details</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/design-system.css" />
+  <link rel="stylesheet" href="../css/user-shell.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: 'Poppins', sans-serif;
     }
+
+    html,
     body {
-      min-height: 100vh;
+      min-height: 100%;
+      width: 100%;
+      font-family: 'Poppins', sans-serif;
       background: linear-gradient(180deg, #f8fbff 0%, #eef4fa 100%);
       color: #14324a;
       overflow-x: hidden;
     }
-    .page {
+
+    .container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: transparent;
+      overflow-y: auto;
+    }
+
+    .page-content {
+      padding: 26px;
       max-width: 1280px;
+      width: 100%;
       margin: 0 auto;
-      padding: 24px;
     }
+
+    /* ========================================
+       TOPBAR
+       ======================================== */
     .topbar {
+      padding: 18px 0 24px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      gap: 14px;
-      flex-wrap: wrap;
-      margin-bottom: 22px;
+      gap: 12px;
+      margin-bottom: 28px;
     }
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 800;
+
+    .btn-back {
+      padding: 11px 20px;
+      background: #e8eff7;
       color: #0e3a5d;
-      letter-spacing: 0.5px;
-    }
-    .brand img {
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-    }
-    .top-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .top-actions a,
-    .action-btn {
-      text-decoration: none;
       border: none;
-      border-radius: 999px;
-      padding: 12px 18px;
-      font-weight: 700;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
       cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      transition: all 0.24s ease;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      white-space: nowrap;
     }
-    .top-actions a {
-      background: #e8eff7;
-      color: #0e3a5d;
-    }
-    .top-actions a.primary,
-    .action-btn.primary {
-      background: linear-gradient(135deg, #0e3a5d, #1b678f);
-      color: #fff;
-      box-shadow: 0 8px 18px rgba(14, 58, 93, 0.18);
-    }
-    .top-actions a:hover,
-    .action-btn:hover {
+
+    .btn-back:hover {
+      background: #dfe7f2;
       transform: translateY(-1px);
     }
+
+    .btn-back:focus {
+      outline: 2px solid #0e3a5d;
+      outline-offset: 2px;
+    }
+
+    /* ========================================
+       HERO SECTION
+       ======================================== */
     .hero {
       display: grid;
-      grid-template-columns: 320px minmax(0, 1fr);
-      gap: 22px;
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 28px;
       align-items: stretch;
-      margin-bottom: 28px;
+      margin-bottom: 32px;
     }
-    .cover-card,
-    .info-card,
-    .recommend-card {
-      background: #fff;
-      border: 1px solid #e5edf5;
-      border-radius: 22px;
-      box-shadow: 0 10px 26px rgba(14, 58, 93, 0.08);
-    }
+
     .cover-card {
-      padding: 18px;
+      background: #ffffff;
+      border: 1px solid #e5edf5;
+      border-radius: 24px;
+      box-shadow: 0 14px 32px rgba(14, 58, 93, 0.08);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      height: fit-content;
+      position: sticky;
+      top: 26px;
     }
-    .cover-card img {
+
+    .cover-image {
       width: 100%;
       aspect-ratio: 3 / 4;
       object-fit: cover;
       border-radius: 16px;
-      display: block;
       background: #e8eff7;
+      display: block;
     }
+
     .info-card {
-      padding: 22px;
-      display: grid;
-      gap: 16px;
-      align-content: start;
-    }
-    .title {
-      font-size: clamp(1.8rem, 4vw, 3rem);
-      color: #0e3a5d;
-      line-height: 1.1;
-    }
-    .meta-row {
+      background: #ffffff;
+      border: 1px solid #e5edf5;
+      border-radius: 24px;
+      box-shadow: 0 14px 32px rgba(14, 58, 93, 0.08);
+      padding: 32px;
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 20px;
     }
-    .pill {
-      background: #eef4fa;
+
+    /* ========================================
+       BOOK INFO
+       ======================================== */
+    .book-header {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .book-title {
+      font-size: 2rem;
+      font-weight: 700;
       color: #0e3a5d;
-      border-radius: 999px;
-      padding: 8px 14px;
-      font-size: 0.9rem;
+      line-height: 1.2;
+    }
+
+    .book-author {
+      font-size: 1rem;
       font-weight: 600;
-    }
-    .description {
       color: #5f7385;
-      line-height: 1.85;
-      font-size: 0.98rem;
     }
-    .actions {
+
+    .book-meta {
       display: flex;
+      flex-direction: column;
       gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 4px;
+      padding: 16px 0;
+      border-top: 1px solid #e5edf5;
+      border-bottom: 1px solid #e5edf5;
     }
-    .action-note {
-      color: #5f7385;
-      font-size: 0.92rem;
-      line-height: 1.6;
-      margin-top: -2px;
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
     }
-    .action-btn.read {
-      background: #1b678f;
-      color: #fff;
-      box-shadow: 0 8px 18px rgba(27, 103, 143, 0.18);
+
+    .meta-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #8a9aaa;
     }
-    .action-btn.borrow {
-      background: linear-gradient(135deg, #0e3a5d, #1b678f);
-      color: #fff;
-      box-shadow: 0 8px 18px rgba(14, 58, 93, 0.18);
-    }
-    .section-title {
-      font-size: 1.3rem;
-      color: #0e3a5d;
-      margin: 8px 0 16px;
-      font-weight: 800;
-    }
-    .recommend-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 16px;
-    }
-    .recommend-card {
-      text-decoration: none;
-      color: inherit;
-      overflow: hidden;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .recommend-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 14px 28px rgba(14, 58, 93, 0.12);
-    }
-    .recommend-card img {
-      width: 100%;
-      aspect-ratio: 3 / 4;
-      object-fit: cover;
-      display: block;
-      background: #e8eff7;
-    }
-    .recommend-card .content {
-      padding: 12px 14px 14px;
-    }
-    .recommend-card h4 {
+
+    .meta-value {
       font-size: 0.95rem;
+      font-weight: 600;
       color: #14324a;
-      margin-bottom: 6px;
-      line-height: 1.35;
     }
-    .recommend-card p {
-      color: #5f7385;
-      font-size: 0.86rem;
-      line-height: 1.6;
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      width: fit-content;
     }
-    @media (max-width: 900px) {
-      .page { padding: 16px; }
-      .hero { grid-template-columns: 1fr; }
-      .cover-card { max-width: 420px; }
+
+    .badge-available {
+      background: #e8f2fb;
+      color: #0e3a5d;
+      border: 1px solid #b5d3ef;
     }
-    @media (max-width: 640px) {
-      .info-card { padding: 18px; }
-      .cover-card { padding: 14px; }
-      .top-actions a,
-      .action-btn { width: 100%; }
-      .top-actions,
-      .actions { width: 100%; }
-      .recommend-grid { grid-template-columns: 1fr 1fr; }
+
+    .badge-borrowed {
+      background: #fff5e8;
+      color: #8b6914;
+      border: 1px solid #f4c896;
     }
+
+    .badge-returned {
+      background: #e8f5eb;
+      color: #1b5e20;
+      border: 1px solid #81c784;
+    }
+
+    .book-description {
+      font-size: 1rem;
+      line-height: 1.8;
+      color: #31485b;
+      padding: 0;
+    }
+
+    /* ========================================
+       ACTION BUTTONS
+       ======================================== */
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .btn-action {
+      flex: 1;
+      min-width: 140px;
+      padding: 13px 20px;
+      border: none;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.24s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 44px;
+    }
+
+    .btn-action:focus {
+      outline: 2px solid #0e3a5d;
+      outline-offset: 2px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0e3a5d, #1b678f);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(14, 58, 93, 0.2);
+    }
+
+    .btn-secondary {
+      background: #e8eff7;
+      color: #0e3a5d;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #dfe7f2;
+      transform: translateY(-1px);
+    }
+
+    .btn-action:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* ========================================
+       METADATA GRID
+       ======================================== */
+    .metadata-section {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      padding: 20px 0;
+      border-top: 1px solid #e5edf5;
+    }
+
+    .metadata-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .metadata-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #8a9aaa;
+    }
+
+    .metadata-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #14324a;
+    }
+
+    /* ========================================
+       RESPONSIVE DESIGN
+       ======================================== */
+    @media (max-width: 1200px) {
+      .page-content {
+        padding: 20px;
+      }
+
+      .hero {
+        gap: 24px;
+      }
+
+      .info-card {
+        padding: 28px;
+      }
+
+      .book-title {
+        font-size: 1.75rem;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .hero {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .cover-card {
+        position: static;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 20px;
+      }
+
+      .cover-image {
+        width: 180px;
+        flex-shrink: 0;
+      }
+
+      .metadata-section {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .page-content {
+        padding: 16px;
+      }
+
+      .hero {
+        gap: 16px;
+      }
+
+      .cover-card {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .cover-image {
+        width: 100%;
+        max-width: 200px;
+        margin: 0 auto;
+      }
+
+      .info-card {
+        padding: 20px;
+        gap: 16px;
+      }
+
+      .book-title {
+        font-size: 1.5rem;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+      }
+
+      .btn-action {
+        width: 100%;
+      }
+
+      .metadata-section {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+    }
+
     @media (max-width: 480px) {
-      .recommend-grid { grid-template-columns: 1fr; }
+      .page-content {
+        padding: 12px;
+      }
+
+      .hero {
+        gap: 12px;
+      }
+
+      .info-card {
+        padding: 16px;
+        gap: 12px;
+      }
+
+      .book-title {
+        font-size: 1.25rem;
+      }
+
+      .book-author {
+        font-size: 0.95rem;
+      }
+
+      .book-description {
+        font-size: 0.95rem;
+      }
+
+      .action-buttons {
+        gap: 8px;
+      }
+
+      .btn-action {
+        padding: 11px 16px;
+        font-size: 0.9rem;
+      }
+    }
+
+    /* ========================================
+       ACCESSIBILITY
+       ======================================== */
+    a:focus,
+    button:focus {
+      outline: 2px solid #0e3a5d;
+      outline-offset: 2px;
     }
   </style>
 </head>
 <body>
-  <div class="page">
-    <div class="topbar">
-      <div class="brand">
-        <img src="../Images/logo.png" alt="Readly Logo">
-        <span>READLY</span>
-      </div>
-      <div class="top-actions">
-        <a href="homepage.php">Dashboard</a>
-        <a href="librarypage.php">Library</a>
-        <a class="primary" href="borrowed-books.php">Borrowed Books</a>
-      </div>
-    </div>
-    <section class="hero">
-      <div class="cover-card">
-        <img src="<?php echo htmlspecialchars(cover_src($book['cover_image']), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo safe_text($book['title']); ?>">
-      </div>
-      <div class="info-card">
-        <div>
-          <h1 class="title"><?php echo safe_text($book['title']); ?></h1>
+  <div class="container">
+    <!-- Sidebar (from user-shell.css) -->
+    <aside class="sidebar" id="sidebar">
+      <div class="logo" onclick="toggleSidebar()"><img src="../Images/logo.png" alt="Readly Logo"></div>
+      <nav class="nav">
+        <a href="homepage.php"><img class="icon" src="../Images/dashboard.png" alt="Dashboard"><span>Dashboard</span></a>
+        <a href="librarypage.php"><img class="icon" src="../Images/Library.png" alt="Library"><span>Library</span></a>
+        <a href="borrowed-books.php"><img class="icon" src="../Images/borrowed.png" alt="Borrowed Books"><span>Borrowed Books</span></a>
+        <a href="track&record.php"><img class="icon" src="../Images/Track.png" alt="Track and Record"><span>Track and Record</span></a>
+        <a href="support.php"><img class="icon" src="../Images/Support.png" alt="Support"><span>Support Page</span></a>
+        <a href="setting.php"><img class="icon" src="../Images/settings.png" alt="Settings"><span>Account Settings</span></a>
+      </nav>
+      <div class="sign-out"><a href="../logout.php"><img class="icon" src="../Images/signout.png" alt="Sign Out"><span>Sign Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-content">
+        <div class="topbar">
+          <a class="btn-back" href="librarypage.php">← Back to Library</a>
         </div>
-        <div class="meta-row">
-          <span class="pill"><i class="fa-solid fa-user"></i> <?php echo safe_text($book['author']); ?></span>
-          <span class="pill"><i class="fa-solid fa-layer-group"></i> <?php echo safe_text($book['category']); ?></span>
-          <span class="pill">⭐ 4.8 Rating</span>
-        </div>
-        <div class="description">
-          <?php echo safe_excerpt($book['description'], 700); ?>
-        </div>
-        <p class="action-note">
-          <?php if ($canReadNow): ?>
-            Your borrow is active. You can read now, return later, or request an extension when the due date gets close.
-          <?php else: ?>
-            Borrow this book to unlock reading access. Returned books can be borrowed again when you need them.
-          <?php endif; ?>
-        </p>
-        <div class="actions">
-          <?php if ($canReadNow): ?>
-            <a class="action-btn read" href="read.php?id=<?php echo (int)$book['id']; ?>" aria-label="Read this book now">Read Now</a>
-          <?php else: ?>
-            <button class="action-btn borrow" type="button" onclick="confirmBorrow(<?php echo (int)$book['id']; ?>)" aria-label="Borrow this book now">Borrow Book</button>
-          <?php endif; ?>
-          <a class="action-btn" href="librarypage.php" aria-label="Back to the library">Back to Library</a>
-        </div>
-      </div>
-    </section>
-    <h2 class="section-title">Recommended Books</h2>
-    <section class="recommend-grid">
-      <?php while ($rec = $recommended->fetch_assoc()): ?>
-        <a class="recommend-card" href="Book-Details.php?id=<?php echo (int)$rec['id']; ?>">
-          <img src="<?php echo htmlspecialchars(cover_src($rec['cover_image']), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo safe_text($rec['title']); ?>">
-          <div class="content">
-            <h4><?php echo safe_text($rec['title']); ?></h4>
-            <p><?php echo safe_excerpt($rec['description'], 120); ?></p>
+
+        <section class="hero">
+          <div class="cover-card">
+            <img class="cover-image" src="<?php echo htmlspecialchars(cover_src($book['cover_image']), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo safe_text($book['title']); ?>">
           </div>
-        </a>
-      <?php endwhile; ?>
-    </section>
+
+          <div class="info-card">
+            <div class="book-header">
+              <h1 class="book-title"><?php echo safe_text($book['title']); ?></h1>
+              <p class="book-author">by <?php echo safe_text($book['author']); ?></p>
+            </div>
+
+            <div class="book-meta">
+              <div class="meta-item">
+                <span class="meta-label">Category</span>
+                <span class="meta-value"><?php echo safe_text($book['category']); ?></span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Availability</span>
+                <span class="status-badge badge-available">
+                  <i class="fa-solid fa-check-circle"></i> Available
+                </span>
+              </div>
+            </div>
+
+            <p class="book-description"><?php echo safe_excerpt($book['description'], 700); ?></p>
+
+            <div class="action-buttons">
+              <?php if ($canReadNow): ?>
+                <a class="btn-action btn-primary" href="read.php?id=<?php echo (int)$book['id']; ?>" aria-label="Read this book now">
+                  <i class="fa-solid fa-book-open"></i> Read Now
+                </a>
+                <a class="btn-action btn-secondary" href="borrowed-books.php" aria-label="Go to borrowed books">
+                  <i class="fa-solid fa-arrow-left"></i> Borrowed Books
+                </a>
+              <?php else: ?>
+                <button class="btn-action btn-primary" type="button" onclick="openBorrowModal(<?php echo (int)$book['id']; ?>, '<?php echo htmlspecialchars($book['title'], ENT_QUOTES, 'UTF-8'); ?>')" aria-label="Borrow this book now">
+                  <i class="fa-solid fa-book"></i> Borrow Book
+                </button>
+                <a class="btn-action btn-secondary" href="librarypage.php" aria-label="Back to library">
+                  Back to Library
+                </a>
+              <?php endif; ?>
+            </div>
+
+            <div class="metadata-section">
+              <div class="metadata-item">
+                <span class="metadata-label">Category</span>
+                <span class="metadata-value"><?php echo safe_text($book['category']); ?></span>
+              </div>
+              <div class="metadata-item">
+                <span class="metadata-label">Author</span>
+                <span class="metadata-value"><?php echo safe_text($book['author']); ?></span>
+              </div>
+              <div class="metadata-item">
+                <span class="metadata-label">Views</span>
+                <span class="metadata-value"><?php echo number_format($book['views']); ?></span>
+              </div>
+              <div class="metadata-item">
+                <span class="metadata-label">Status</span>
+                <span class="metadata-value">Available</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
   </div>
+
   <script>
-    function confirmBorrow(bookId) {
-      const proceed = confirm('Do you want to borrow this book?');
-      if (proceed) {
-        window.location.href = 'borrow.php?book_id=' + encodeURIComponent(bookId);
-      }
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    function openBorrowModal(bookId, bookTitle) {
+      Swal.fire({
+        title: 'Borrow this book?',
+        html: `<p style="color: #5f7385; margin-bottom: 12px;"><strong>${bookTitle}</strong></p><p style="color: #5f7385; font-size: 0.92rem;">This will add the book to your borrowed books list for 7 days.</p>`,
+        icon: 'question',
+        iconColor: '#0e3a5d',
+        showCancelButton: true,
+        confirmButtonText: 'Borrow Book',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#1b678f',
+        cancelButtonColor: '#e8eff7',
+        reverseButtons: true,
+        customClass: {
+          popup: 'swal-modern',
+          title: 'swal-title',
+          confirmButton: 'swal-confirm',
+          cancelButton: 'swal-cancel'
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = 'borrow.php?book_id=' + encodeURIComponent(bookId);
+        }
+      });
     }
   </script>
 </body>

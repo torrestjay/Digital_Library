@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>User Profile</title>
+  <link rel="stylesheet" href="../css/design-system.css" />
   <link rel="stylesheet" href="../css/profile.css" />
+  <link rel="stylesheet" href="../css/user-shell.css" />
 </head>
 <body>
   <div class="container">
@@ -44,10 +46,10 @@
         <!-- ✅ UPDATED SECTION BELOW -->
         <div class="profile-tabs">
           <div class="left-tabs">
-            <button class="tab active">ABOUT</button>
-            <button class="tab">CONVERSATION</button>
+            <button class="btn btn-secondary tab active">ABOUT</button>
+            <button class="btn btn-secondary tab">CONVERSATION</button>
           </div>
-          <button class="edit-btn">Edit Profile</button>
+          <button class="btn btn-primary">Edit Profile</button>
         </div>
         <div class="profile-card">
           <h3>Joined</h3>

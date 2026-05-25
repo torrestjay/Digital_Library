@@ -92,7 +92,9 @@ foreach ($borrowedBooks as $row) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Borrowed Books</title>
+  <link rel="stylesheet" href="../css/design-system.css" />
   <link rel="stylesheet" href="../css/librarypage.css" />
+  <link rel="stylesheet" href="../css/user-shell.css" />
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -100,36 +102,199 @@ foreach ($borrowedBooks as $row) {
     body { margin: 0; background: linear-gradient(180deg, #f8fbff 0%, #eef4fa 100%); color: #14324a; overflow-x: hidden; }
     .content { padding: 26px; }
     .page-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
-    .page-header h1 { margin: 0; font-size: 2rem; }
-    .page-header p { margin: 6px 0 0; color: #5f7385; }
-    .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 22px; }
-    .stat-card { background: #fff; border: 1px solid #e5edf5; border-radius: 16px; box-shadow: 0 10px 26px rgba(14, 58, 93, 0.08); padding: 18px; }
-    .stat-card strong { display: block; color: #5f7385; font-size: 0.85rem; margin-bottom: 8px; }
+    .page-header h1 { margin: 0; font-size: 2rem; font-weight: 700; }
+    .page-header p { margin: 6px 0 0; color: #5f7385; font-size: 0.95rem; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 28px; }
+    .stat-card { background: #fff; border: 1px solid #e5edf5; border-radius: 16px; box-shadow: 0 10px 26px rgba(14, 58, 93, 0.08); padding: 18px; transition: all 0.2s ease; }
+    .stat-card:hover { box-shadow: 0 14px 32px rgba(14, 58, 93, 0.12); transform: translateY(-2px); }
+    .stat-card strong { display: block; color: #5f7385; font-size: 0.85rem; margin-bottom: 8px; font-weight: 600; }
     .stat-card span { font-size: 1.7rem; font-weight: 700; color: #0e3a5d; }
     .borrowed-list { display: grid; gap: 16px; }
-    .borrowed-item { display: grid; grid-template-columns: 92px 1fr auto; gap: 16px; align-items: stretch; background: #fff; border: 1px solid #e5edf5; border-radius: 18px; box-shadow: 0 10px 26px rgba(14, 58, 93, 0.08); padding: 14px; }
+    .borrowed-item { display: grid; grid-template-columns: 92px 1fr auto; gap: 16px; align-items: stretch; background: #fff; border: 1px solid #e5edf5; border-radius: 18px; box-shadow: 0 10px 26px rgba(14, 58, 93, 0.08); padding: 16px; transition: all 0.2s ease; }
+    .borrowed-item:hover { box-shadow: 0 14px 32px rgba(14, 58, 93, 0.12); }
     .cover { width: 92px; height: 130px; border-radius: 12px; object-fit: cover; display: block; background: #e8eff7; }
-    .book-meta h2 { margin: 0 0 4px; font-size: 1.06rem; }
+    .book-meta { display: flex; flex-direction: column; }
+    .book-meta h2 { margin: 0 0 4px; font-size: 1.06rem; font-weight: 700; }
     .book-meta .author { color: #5f7385; margin: 0 0 8px; font-size: 0.92rem; }
     .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-    .badge { padding: 5px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+    .badge { padding: 6px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
     .badge.borrowed { background: #d6ecff; color: #0e3a5d; }
     .badge.pending { background: #fff2cd; color: #8c6400; }
     .badge.returned { background: #def5e5; color: #176b37; }
     .badge.overdue { background: #fde2e1; color: #a62923; }
-    .progress-wrap { margin-top: 12px; }
-    .progress-head { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 8px; color: #5f7385; font-size: 0.84rem; }
+    .progress-wrap { margin-top: 14px; }
+    .progress-head { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 8px; color: #5f7385; font-size: 0.84rem; font-weight: 500; }
     .progress-bar { height: 10px; background: #e8eff7; border-radius: 999px; overflow: hidden; }
-    .progress-bar > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #1b678f, #0e3a5d); }
-    .action-stack { display: flex; flex-direction: column; gap: 10px; justify-content: center; min-width: 145px; }
-    .btn { display: inline-flex; justify-content: center; align-items: center; border: none; border-radius: 10px; padding: 10px 14px; font-weight: 700; text-decoration: none; cursor: pointer; }
-    .btn.read { background: #1b678f; color: #fff; }
-    .btn.return { background: #1b678f; color: #fff; }
-    .btn.disabled { background: #b7c1cb; color: #fff; cursor: not-allowed; pointer-events: none; }
-    .empty-state { background: #fff; border: 1px dashed #c2d2e3; color: #5f7385; border-radius: 16px; padding: 24px; text-align: center; }
-    .back-link { display: inline-flex; margin-bottom: 18px; text-decoration: none; color: #0e3a5d; font-weight: 700; }
-    @media (max-width: 1100px) { .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .borrowed-item { grid-template-columns: 92px 1fr; } .action-stack { grid-column: 1 / -1; min-width: 0; flex-direction: row; } }
-    @media (max-width: 700px) { .content { padding: 18px; } .stats-grid { grid-template-columns: 1fr; } .borrowed-item { grid-template-columns: 1fr; } .cover { width: 100%; height: 220px; } .action-stack { flex-direction: column; } }
+    .progress-bar > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #1b678f, #0e3a5d); transition: background 0.3s ease; }
+    .progress-bar.overdue > span { background: linear-gradient(90deg, #e8744f, #c94a39); }
+    .nav a.active { background: rgba(255, 255, 255, 0.12); border-left-color: #fff; }
+    .empty-state { background: #fff; border: 1px dashed #c2d2e3; color: #5f7385; border-radius: 16px; padding: 32px 24px; text-align: center; font-size: 1rem; }
+    .empty-state-search { background: #fff; border: 1px dashed #c2d2e3; color: #5f7385; border-radius: 16px; padding: 32px 24px; text-align: center; font-size: 1rem; display: none; }
+    .empty-state-search.show { display: block; }
+
+.toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.toolbar input,
+.toolbar select {
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #d9e5f0;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.toolbar input:focus,
+.toolbar select:focus {
+  outline: none;
+  border-color: #0e3a5d;
+  box-shadow: 0 0 0 3px rgba(14, 58, 93, 0.1);
+}
+
+#searchBooks {
+  flex: 1;
+  max-width: 420px;
+  min-width: 240px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+  margin-bottom: 0;
+}
+
+.pagination button {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #d9e5f0;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination button:hover:not(.active) {
+  background: #f5f9fc;
+  border-color: #0e3a5d;
+  color: #0e3a5d;
+}
+
+.pagination button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(14, 58, 93, 0.1);
+}
+
+.pagination button.active {
+  background: #0e3a5d;
+  color: #fff;
+  border-color: #0e3a5d;
+}
+
+.action-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+  min-width: 180px;
+}
+
+.action-stack form {
+  width: 100%;
+}
+
+.action-stack .btn,
+.action-stack a.btn,
+.action-stack button.btn {
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.action-stack .btn.read {
+  background: #ffffff;
+  color: #0e3a5d;
+  border: 1px solid #d9e5f0;
+}
+
+.action-stack .btn.read:hover {
+  background: #f5f9fc;
+  border-color: #0e3a5d;
+}
+
+.action-stack .btn.return {
+  background: linear-gradient(135deg, #0e3a5d, #1b678f);
+  color: #fff;
+}
+
+.action-stack .btn.return:hover {
+  background: linear-gradient(135deg, #0a2a47, #15527a);
+}
+
+.action-stack .btn.disabled {
+  background: #e8eff7;
+  color: #8fa3b5;
+  border: 1px solid #d9e5f0;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.action-stack .btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(14, 58, 93, 0.1);
+}
+
+    @media (max-width: 1100px) { 
+      .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } 
+      .borrowed-item { grid-template-columns: 92px 1fr; } 
+      .action-stack { grid-column: 1 / -1; min-width: 0; flex-direction: row; gap: 12px; }
+      .action-stack .btn { flex: 1; }
+    }
+    @media (max-width: 900px) {
+      .toolbar { flex-direction: column; }
+      #searchBooks { max-width: 100%; }
+      #filterBooks, #sortBooks { width: 100%; }
+    }
+    @media (max-width: 700px) { 
+      .content { padding: 18px; } 
+      .stats-grid { grid-template-columns: 1fr; } 
+      .page-header h1 { font-size: 1.6rem; }
+      .page-header p { font-size: 0.9rem; }
+      .borrowed-item { grid-template-columns: 1fr; } 
+      .cover { width: 100%; height: 220px; } 
+      .action-stack { flex-direction: column; gap: 10px; }
+      .action-stack .btn { width: 100%; }
+      .toolbar { flex-direction: column; }
+      #searchBooks { max-width: 100%; width: 100%; }
+      #filterBooks, #sortBooks { width: 100%; }
+      .pagination { margin-top: 20px; }
+    }
   </style>
 </head>
 <body>
@@ -141,7 +306,7 @@ foreach ($borrowedBooks as $row) {
       <nav class="nav">
         <a href="homepage.php"><img class="icon" src="../Images/dashboard.png" alt="Dashboard Icon" /><span>Dashboard</span></a>
         <a href="librarypage.php"><img class="icon" src="../Images/Library.png" alt="Library Icon" /><span>Library</span></a>
-        <a href="borrowed-books.php"><img class="icon" src="../Images/borrowed.png" alt="Borrowed Books Icon" /><span>Borrowed Books</span></a>
+        <a href="borrowed-books.php" class="active"><img class="icon" src="../Images/borrowed.png" alt="Borrowed Books Icon" /><span>Borrowed Books</span></a>
         <a href="track&record.php"><img class="icon" src="../Images/Track.png" alt="Track Icon" /><span>Track and Record</span></a>
         <a href="support.php"><img class="icon" src="../Images/Support.png" alt="Support Icon" /><span>Support Page</span></a>
         <a href="setting.php"><img class="icon" src="../Images/settings.png" alt="Settings Icon" /><span>Account Settings</span></a>
@@ -151,14 +316,9 @@ foreach ($borrowedBooks as $row) {
       </div>
     </aside>
     <main class="main-content">
-      <header class="header">
-        <div class="spacer"></div>
-        <div class="header-icons">
-          <a href="setting.php"><img class="icon" src="../Images/profile.png" alt="Profile"></a>
-        </div>
-      </header>
+
       <section class="content">
-        <a class="back-link" href="homepage.php">Back to dashboard</a>
+        
         <div class="page-header">
           <div>
             <h1>Borrowed Books</h1>
@@ -174,7 +334,26 @@ foreach ($borrowedBooks as $row) {
         <?php if (empty($borrowedBooks)): ?>
           <div class="empty-state">You have not borrowed any books yet.</div>
         <?php else: ?>
-          <div class="borrowed-list">
+          <div class="toolbar">
+            <input type="text" id="searchBooks" placeholder="Search title or author...">
+            <select id="filterBooks">
+              <option value="all">All Books</option>
+              <option value="borrowed">Borrowed</option>
+              <option value="returned">Returned</option>
+              <option value="pending">Pending</option>
+              <option value="overdue">Overdue</option>
+            </select>
+            <select id="sortBooks">
+              <option value="newest">Newest Borrowed</option>
+              <option value="oldest">Oldest Borrowed</option>
+              <option value="title">Title A-Z</option>
+              <option value="due">Nearest Due Date</option>
+            </select>
+          </div>
+
+          <div class="empty-state-search" id="emptyState">No books found matching your criteria.</div>
+
+          <div class="borrowed-list" id="bookList">
             <?php foreach ($borrowedBooks as $book): ?>
               <?php
                 $status = strtolower((string)$book['status']);
@@ -187,20 +366,42 @@ foreach ($borrowedBooks as $row) {
                 $progress = borrowed_progress_percent($book['borrow_date'], $book['due_date'], $book['return_date']);
                 $overdue = $isActive && strtotime($book['due_date']) < strtotime(date('Y-m-d'));
                 $statusLabel = $isReturned ? 'Returned' : ucfirst($status);
+                $dataStatus = $overdue ? 'overdue' : strtolower($statusLabel);
               ?>
-              <article class="borrowed-item">
-                <img class="cover" src="<?php echo htmlspecialchars(borrowed_cover_src($book['cover_image']), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($book['title'], ENT_QUOTES, 'UTF-8'); ?>">
+
+              <article
+                  class="borrowed-item"
+                  data-status="<?php echo htmlspecialchars($dataStatus, ENT_QUOTES, 'UTF-8'); ?>"
+                  data-title="<?php echo strtolower(htmlspecialchars($book['title'], ENT_QUOTES, 'UTF-8')); ?>"
+                  data-author="<?php echo strtolower(htmlspecialchars($book['author'], ENT_QUOTES, 'UTF-8')); ?>"
+                  data-borrow="<?php echo (int)strtotime($book['borrow_date']); ?>"
+                  data-due="<?php echo (int)strtotime($book['due_date']); ?>"
+              >
+                <img class="cover" src="<?php echo htmlspecialchars(borrowed_cover_src($book['cover_image']), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($book['title'], ENT_QUOTES, 'UTF-8'); ?>" loading="lazy">
                 <div class="book-meta">
                   <h2><?php echo htmlspecialchars($book['title'], ENT_QUOTES, 'UTF-8'); ?></h2>
                   <p class="author"><?php echo htmlspecialchars($book['author'], ENT_QUOTES, 'UTF-8'); ?></p>
                   <div class="badges">
-                    <span class="badge <?php echo $status === 'pending' ? 'pending' : ($isReturned ? 'returned' : ($overdue ? 'overdue' : 'borrowed')); ?>"><?php echo htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8'); ?></span>
-                    <span class="badge borrowed"><?php echo htmlspecialchars($daysLeftText, ENT_QUOTES, 'UTF-8'); ?></span>
+                    <span class="badge <?php echo $status === 'pending' ? 'pending' : ($isReturned ? 'returned' : ($overdue ? 'overdue' : 'borrowed')); ?>">
+                      <?php echo htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8'); ?>
+                    </span>
+                    <?php if (!$isReturned): ?>
+                      <span class="badge borrowed">
+                        <?php echo htmlspecialchars($daysLeftText, ENT_QUOTES, 'UTF-8'); ?>
+                      </span>
+                    <?php endif; ?>
                   </div>
-                  <div class="progress-wrap">
-                    <div class="progress-head"><span>Reading progress</span><span><?php echo $progress; ?>%</span></div>
-                    <div class="progress-bar"><span style="width: <?php echo $progress; ?>%"></span></div>
-                  </div>
+                  <?php if ($isActive): ?>
+                    <div class="progress-wrap">
+                      <div class="progress-head">
+                        <span>Borrow Duration</span>
+                        <span><?php echo $progress; ?>%</span>
+                      </div>
+                      <div class="progress-bar <?php echo $overdue ? 'overdue' : ''; ?>">
+                        <span style="width: <?php echo $progress; ?>%"></span>
+                      </div>
+                    </div>
+                  <?php endif; ?>
                 </div>
                 <div class="action-stack">
                   <?php if ($isActive): ?>
@@ -212,25 +413,27 @@ foreach ($borrowedBooks as $row) {
                     <form method="post" action="return_book.php" onsubmit="return confirmReturn(event)">
                       <input type="hidden" name="borrow_id" value="<?php echo (int)$book['id']; ?>">
                       <input type="hidden" name="book_id" value="<?php echo (int)$book['book_id']; ?>">
-                      <button type="submit" class="btn return">Return Book</button>
+                      <button type="submit" class="btn return">Return</button>
                     </form>
                     <?php if ($canRequestExtension): ?>
                       <form method="post" action="request_extension.php" onsubmit="return confirmExtension(event)">
                         <input type="hidden" name="borrow_id" value="<?php echo (int)$book['id']; ?>">
-                        <button type="submit" class="btn return">Request Extension</button>
+                        <button type="submit" class="btn return">Extend Due Date</button>
                       </form>
                     <?php endif; ?>
                   <?php else: ?>
                     <?php if ($canBorrowAgain): ?>
                       <a class="btn return" href="borrow.php?book_id=<?php echo (int)$book['book_id']; ?>">Borrow Again</a>
                     <?php else: ?>
-                      <button type="button" class="btn disabled" disabled>Unavailable</button>
+                      <button type="button" class="btn disabled" disabled>Not Available</button>
                     <?php endif; ?>
                   <?php endif; ?>
                 </div>
               </article>
             <?php endforeach; ?>
           </div>
+
+          <div class="pagination" id="pagination"></div>
         <?php endif; ?>
       </section>
     </main>
@@ -248,10 +451,15 @@ foreach ($borrowedBooks as $row) {
         title: 'Return this book?',
         text: 'This will mark the book as returned and restore availability.',
         icon: 'question',
+        iconColor: '#0e3a5d',
         showCancelButton: true,
         confirmButtonColor: '#2f8f5b',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, return it'
+        cancelButtonColor: '#e8eff7',
+        confirmButtonText: 'Yes, return it',
+        cancelButtonText: 'Cancel',
+        customClass: {
+          cancelButton: 'swal-secondary-btn'
+        }
       }).then((result) => {
         if (result.isConfirmed) {
           form.submit();
@@ -267,10 +475,15 @@ foreach ($borrowedBooks as $row) {
         title: 'Request extension?',
         text: 'This will add 3 days to your due date.',
         icon: 'question',
+        iconColor: '#0e3a5d',
         showCancelButton: true,
         confirmButtonColor: '#0e3a5d',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, extend it'
+        cancelButtonColor: '#e8eff7',
+        confirmButtonText: 'Yes, extend it',
+        cancelButtonText: 'Cancel',
+        customClass: {
+          cancelButton: 'swal-secondary-btn'
+        }
       }).then((result) => {
         if (result.isConfirmed) {
           form.submit();
@@ -278,6 +491,136 @@ foreach ($borrowedBooks as $row) {
       });
       return false;
     }
+
+    const searchInput = document.getElementById('searchBooks');
+    const filterInput = document.getElementById('filterBooks');
+    const sortInput = document.getElementById('sortBooks');
+    const bookList = document.getElementById('bookList');
+    const emptyState = document.getElementById('emptyState');
+
+    let cards = Array.from(document.querySelectorAll('.borrowed-item'));
+    const booksPerPage = 5;
+    let currentPage = 1;
+
+    function renderBooks() {
+      let filtered = cards.filter(card => {
+        const search = searchInput.value.toLowerCase().trim();
+        const title = card.dataset.title || '';
+        const author = card.dataset.author || '';
+        const status = card.dataset.status || '';
+
+        const matchSearch = search === '' || title.includes(search) || author.includes(search);
+        const filterValue = filterInput.value || 'all';
+        const matchFilter = filterValue === 'all' || status === filterValue;
+
+        return matchSearch && matchFilter;
+      });
+
+      // Sort filtered results
+      switch (sortInput.value) {
+        case 'title':
+          filtered.sort((a, b) => {
+            const titleA = a.dataset.title || '';
+            const titleB = b.dataset.title || '';
+            return titleA.localeCompare(titleB);
+          });
+          break;
+
+        case 'oldest':
+          filtered.sort((a, b) => {
+            const borrowA = Number(a.dataset.borrow) || 0;
+            const borrowB = Number(b.dataset.borrow) || 0;
+            return borrowA - borrowB;
+          });
+          break;
+
+        case 'due':
+          filtered.sort((a, b) => {
+            const dueA = Number(a.dataset.due) || 0;
+            const dueB = Number(b.dataset.due) || 0;
+            return dueA - dueB;
+          });
+          break;
+
+        case 'newest':
+        default:
+          filtered.sort((a, b) => {
+            const borrowA = Number(a.dataset.borrow) || 0;
+            const borrowB = Number(b.dataset.borrow) || 0;
+            return borrowB - borrowA;
+          });
+      }
+
+      // Hide all cards
+      cards.forEach(card => {
+        card.style.display = 'none';
+      });
+
+      // Show empty state if no results
+      if (filtered.length === 0) {
+        emptyState.classList.add('show');
+      } else {
+        emptyState.classList.remove('show');
+      }
+
+      // Calculate pagination
+      const start = (currentPage - 1) * booksPerPage;
+      const end = start + booksPerPage;
+
+      // Display paginated results
+      filtered.slice(start, end).forEach(card => {
+        card.style.display = '';
+      });
+
+      renderPagination(filtered.length);
+    }
+
+    function renderPagination(total) {
+      const pages = Math.ceil(total / booksPerPage);
+      const pagination = document.getElementById('pagination');
+
+      pagination.innerHTML = '';
+
+      if (pages <= 1) return;
+
+      for (let i = 1; i <= pages; i++) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = i;
+
+        if (i === currentPage) {
+          btn.classList.add('active');
+        }
+
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          currentPage = i;
+          renderBooks();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        pagination.appendChild(btn);
+      }
+    }
+
+    // Event listeners
+    searchInput.addEventListener('input', () => {
+      currentPage = 1;
+      renderBooks();
+    });
+
+    filterInput.addEventListener('change', () => {
+      currentPage = 1;
+      renderBooks();
+    });
+
+    sortInput.addEventListener('change', () => {
+      currentPage = 1;
+      renderBooks();
+    });
+
+    // Initial render
+    renderBooks();
   </script>
   <?php if (!empty($success)): ?>
     <script>

@@ -47,202 +47,167 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sign Up Digital Library</title>
+  <title>Sign Up | Digital Library</title>
+  <link rel="stylesheet" href="../css/design-system.css" />
+  <link rel="stylesheet" href="../css/login.css" />
+  <script src="https://kit.fontawesome.com/3b07bc6295.js" crossorigin="anonymous"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Libre Baskerville', sans-serif;
-      background-color: #f8f4f0;
-      display: flex;
-      height: 100vh;
-    }
-    .signup-container {
-      display: flex;
-      width: 100%;
-    }
-    .signup-form {
-      flex: 1;
-      background-color: #f8f4f0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 0 80px;
-      text-align: center;
-      height: 100vh;
-    }
-    .form-wrapper {
-      width: 100%;
-      max-width: 400px;
-    }
-    .form-wrapper h1 {
-      font-family: 'Libre Baskerville', serif;
-      font-size: 2rem;
-      margin-bottom: 10px;
-    }
-    .form-wrapper p {
-      margin-bottom: 30px;
-      color: #666;
-    }
-    .form-wrapper input {
-      width: 100%;
-      padding: 15px;
-      margin-bottom: 20px;
-      border: 1px solid #1a1919;
-      border-radius: 8px;
-      font-size: 1rem;
-    }
-    .form-wrapper a {
-      text-decoration: none;
-      font-size: 0.9rem;
-      color: #0077cc;
-    }
-    .form-wrapper button {
-      background-color: #1f3556;
-      color: white;
-      border: 1px solid #1a1919;
-      padding: 15px;
-      border-radius: 8px;
-      font-size: 1rem;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    .google-login {
-      text-align: center;
-      margin-top: 20px;
-    }
-    .google-login img {
-      width: 30px;
-      cursor: pointer;
-    }
     .signup-image {
-      flex: 1;
+      background: linear-gradient(180deg, #f8fbff 0%, #eef4fa 100%);
+    }
+    .password-requirements {
+      text-align: left;
+      font-size: 0.85rem;
+      margin: 16px 0 16px 0;
+      list-style: none;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .password-requirements li {
       display: flex;
       align-items: center;
-      justify-content: center;
-      background-color: #f8f4f0;
-      padding: 40px;
+      gap: 8px;
+      color: var(--text-muted);
+      transition: color 0.2s ease;
     }
-    .signup-image img {
-      max-width: 110%;
-      height: auto;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    .password-requirements li.valid {
+      color: var(--success);
     }
-    .divider {
-      text-align: center;
-      margin: 30px 0 20px;
-      position: relative;
+    .password-requirements li.invalid {
+      color: var(--danger);
     }
-    .divider::before, .divider::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      width: 45%;
-      height: 1px;
-      background-color: #ccc;
-    }
-    .divider::before { left: 0; }
-    .divider::after { right: 0; }
-    .divider span {
-      padding: 0 10px;
-      background-color: #fff;
-      color: #888;
-    }
-    .message.error {
-      color: red;
-      margin-bottom: 15px;
-    }
-    .message.success {
-      color: green;
-      margin-bottom: 15px;
+    @media (max-width: 960px) {
+      .signup-image {
+        background: linear-gradient(180deg, #f8fbff 0%, #eef4fa 100%);
+      }
     }
   </style>
 </head>
 <body>
-  <div class="signup-container">
-    <div class="signup-form">
-      <div class="form-wrapper">
-        <h1>Hello!</h1>
-        <p>Fill in all informations.</p>
-        <?php if ($signup_error): ?>
-          <div class="message error"><?= htmlspecialchars($signup_error) ?></div>
-        <?php elseif ($signup_success): ?>
-          <div class="message success"><?= htmlspecialchars($signup_success) ?></div>
-        <?php endif; ?>
-        <form action="signup.php" method="POST">
-          <input type="text" name="fullname" placeholder="Full Name" required />
-          <input type="email" name="email" placeholder="Email Address" required />
-          <input type="password" id="password" name="password" placeholder="Password" required oninput="checkPasswordStrength()" />
-          <ul id="password-requirements" style="text-align: left; font-size: 0.9rem; margin-top: -15px; margin-bottom: 15px; color: #888;">
-            <li id="length" style="color: red;">❌ At least 8 characters</li>
-            <li id="uppercase" style="color: red;">❌ At least one uppercase letter</li>
-            <li id="lowercase" style="color: red;">❌ At least one lowercase letter</li>
-            <li id="number" style="color: red;">❌ At least one number</li>
-            <li id="special" style="color: red;">❌ At least one special character (@$!%*?&)</li>
-          </ul>
-          <input type="password" name="confirm_password" placeholder="Confirm Password" required />
-          <p>Already have an account? <a href="../login.php">Sign In</a></p>
-          <button type="submit">Sign Up</button>
-        </form>
-        <div class="divider"><span>or sign-up with</span></div>
-        <div class="google-login">
-          <img src="../Images/google.png" alt="Google Sign Up" />
-        </div>
-      </div>
+  <div id="toastBox"></div>
+  <div class="login-container">
+    <!-- Left Side Image -->
+    <div class="login-image signup-image">
+      <img src="../Images/library-signup.png" alt="Sign Up Image" />
     </div>
-    <div class="signup-image">
-      <img src="../Images/library-signup.png" alt="Library Sign Up" />
+    <!-- Right Side Form -->
+    <div class="login-form">
+      <h1>Create Account</h1>
+      <p>Already have an account? <a href="../login.php">Sign In</a></p>
+      <?php if (!empty($signup_error)): ?>
+        <div class="form-alert"><?= htmlspecialchars($signup_error) ?></div>
+      <?php endif; ?>
+      <form method="POST" action="signup.php">
+        <input class="input-field" type="text" name="fullname" placeholder="Full Name" required />
+        <input class="input-field" type="email" name="email" placeholder="Email Address" required />
+        <input class="input-field" type="password" id="password" name="password" placeholder="Password" required oninput="checkPasswordStrength()" />
+        <ul class="password-requirements" id="password-requirements">
+          <li id="length" class="invalid"><span class="icon">❌</span> At least 8 characters</li>
+          <li id="uppercase" class="invalid"><span class="icon">❌</span> At least one uppercase letter</li>
+          <li id="lowercase" class="invalid"><span class="icon">❌</span> At least one lowercase letter</li>
+          <li id="number" class="invalid"><span class="icon">❌</span> At least one number</li>
+          <li id="special" class="invalid"><span class="icon">❌</span> At least one special character (@$!%*?&)</li>
+        </ul>
+        <input class="input-field" type="password" name="confirm_password" placeholder="Confirm Password" required />
+        <button type="submit" class="btn btn-primary">Create Account</button>
+      </form>
+      <div class="divider"><span>or</span></div>
+      <div class="google-login">
+        <button type="button" class="google-btn" title="Sign up with Google">
+          <img src="../Images/google.png" alt="Google" />
+        </button>
+      </div>
     </div>
   </div>
   <script>
-  function checkPasswordStrength() {
-    const password = document.getElementById("password").value;
-    const length = document.getElementById("length");
-    const uppercase = document.getElementById("uppercase");
-    const lowercase = document.getElementById("lowercase");
-    const number = document.getElementById("number");
-    const special = document.getElementById("special");
-    // Check length
-    if (password.length >= 8) {
-      length.textContent = "✅ At least 8 characters";
-      length.style.color = "green";
-    } else {
-      length.textContent = "❌ At least 8 characters";
-      length.style.color = "red";
+    let toastBox = document.getElementById('toastBox');
+    let successMess = '<i class="fa-solid fa-circle-check"></i> Account Created Successfully!';
+    function showToast(msg) {
+        let toast = document.createElement('div'); 
+        toast.classList.add('toast');
+        toast.innerHTML = msg;
+        toastBox.appendChild(toast); 
+        if (msg.includes('error')) {
+            toast.classList.add('error');
+        }
+        // Play notification sound if available
+        const sound = document.getElementById('notifySound');
+        if (sound) sound.play();
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
     }
-    // Check uppercase
-    if (/[A-Z]/.test(password)) {
-      uppercase.textContent = "✅ At least one uppercase letter";
-      uppercase.style.color = "green";
-    } else {
-      uppercase.textContent = "❌ At least one uppercase letter";
-      uppercase.style.color = "red";
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('status') === 'success') {
+        showToast(successMess);
+        window.history.replaceState(null, null, window.location.pathname);
     }
-    // Check lowercase
-    if (/[a-z]/.test(password)) {
-      lowercase.textContent = "✅ At least one lowercase letter";
-      lowercase.style.color = "green";
-    } else {
-      lowercase.textContent = "❌ At least one lowercase letter";
-      lowercase.style.color = "red";
+    
+    function checkPasswordStrength() {
+      const password = document.getElementById("password").value;
+      const length = document.getElementById("length");
+      const uppercase = document.getElementById("uppercase");
+      const lowercase = document.getElementById("lowercase");
+      const number = document.getElementById("number");
+      const special = document.getElementById("special");
+      
+      // Check length
+      if (password.length >= 8) {
+        length.classList.remove('invalid');
+        length.classList.add('valid');
+        length.innerHTML = '<span class="icon">✅</span> At least 8 characters';
+      } else {
+        length.classList.remove('valid');
+        length.classList.add('invalid');
+        length.innerHTML = '<span class="icon">❌</span> At least 8 characters';
+      }
+      
+      // Check uppercase
+      if (/[A-Z]/.test(password)) {
+        uppercase.classList.remove('invalid');
+        uppercase.classList.add('valid');
+        uppercase.innerHTML = '<span class="icon">✅</span> At least one uppercase letter';
+      } else {
+        uppercase.classList.remove('valid');
+        uppercase.classList.add('invalid');
+        uppercase.innerHTML = '<span class="icon">❌</span> At least one uppercase letter';
+      }
+      
+      // Check lowercase
+      if (/[a-z]/.test(password)) {
+        lowercase.classList.remove('invalid');
+        lowercase.classList.add('valid');
+        lowercase.innerHTML = '<span class="icon">✅</span> At least one lowercase letter';
+      } else {
+        lowercase.classList.remove('valid');
+        lowercase.classList.add('invalid');
+        lowercase.innerHTML = '<span class="icon">❌</span> At least one lowercase letter';
+      }
+      
+      // Check number
+      if (/\d/.test(password)) {
+        number.classList.remove('invalid');
+        number.classList.add('valid');
+        number.innerHTML = '<span class="icon">✅</span> At least one number';
+      } else {
+        number.classList.remove('valid');
+        number.classList.add('invalid');
+        number.innerHTML = '<span class="icon">❌</span> At least one number';
+      }
+      
+      // Check special character
+      if (/[@$!%*?&]/.test(password)) {
+        special.classList.remove('invalid');
+        special.classList.add('valid');
+        special.innerHTML = '<span class="icon">✅</span> At least one special character (@$!%*?&)';
+      } else {
+        special.classList.remove('valid');
+        special.classList.add('invalid');
+        special.innerHTML = '<span class="icon">❌</span> At least one special character (@$!%*?&)';
+      }
     }
-    // Check number
-    if (/\d/.test(password)) {
-      number.textContent = "✅ At least one number";
-      number.style.color = "green";
-    } else {
-      number.textContent = "❌ At least one number";
-      number.style.color = "red";
-    }
-    // Check special character
-    if (/[@$!%*?&]/.test(password)) {
-      special.textContent = "✅ At least one special character (@$!%*?&)";
-      special.style.color = "green";
-    } else {
-      special.textContent = "❌ At least one special character (@$!%*?&)";
-      special.style.color = "red";
-    }
-  }
-</script>
+  </script>
 </body>
 </html>

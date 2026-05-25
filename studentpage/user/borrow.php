@@ -5,6 +5,7 @@ require_once('borrow_rules.php');
 $user_id = $_SESSION['user_id'] ?? null;
 $book_id = isset($_POST['book_id']) ? (int)$_POST['book_id'] : (isset($_GET['book_id']) ? (int)$_GET['book_id'] : 0);
 $due_input = $_POST['date'] ?? null;
+$message = '';
 if (!$user_id || $book_id <= 0) {
     $_SESSION['error'] = 'Invalid borrow request.';
     header("Location: ../login.php");

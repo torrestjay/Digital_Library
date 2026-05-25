@@ -3,6 +3,7 @@ session_start(); // ✅ Required to use $_SESSION
 include('../dbcon.php');
 require_once('borrow_rules.php');
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $message = '';
     if (!isset($_SESSION['user_id'])) {
         $_SESSION['error'] = 'Please sign in first.';
         header('Location: ../login.php');

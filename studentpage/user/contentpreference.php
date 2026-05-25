@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Setting Content Preference</title>
+  <link rel="stylesheet" href="../css/design-system.css" />
   <style>
       background: linear-gradient(180deg, #f8fbff 0%, #eef4fa 100%);
       color: #14324a;
@@ -67,6 +68,8 @@
     .sign-out a:hover {
       background-color: #12476f;
     }
+  </style>
+  <link rel="stylesheet" href="../css/user-shell.css" />
     .icon {
       width: 25px;
       height: 25px;

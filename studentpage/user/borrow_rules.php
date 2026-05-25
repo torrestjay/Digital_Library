@@ -62,9 +62,20 @@ function get_active_borrow_record(mysqli $conn, int $userId, int $bookId): ?arra
     return $row ?: null;
 }
 
-function create_borrow_record(mysqli $conn, int $userId, int $bookId, string $dueDate, string &$message): bool
+function create_borrow_record(mysqli $conn, int $userId, int $bookId, ?string $dueDate, ?string &$message = null): bool
 {
     $message = '';
+
+    if ($userId <= 0 || $bookId <= 0) {
+        $message = 'Invalid borrow request.';
+        return false;
+    }
+
+    $dueDate = trim((string)$dueDate);
+    if ($dueDate === '') {
+        $message = 'A valid return date is required.';
+        return false;
+    }
 
     $conn->begin_transaction();
     try {
@@ -86,7 +97,19 @@ function create_borrow_record(mysqli $conn, int $userId, int $bookId, string $du
             throw new RuntimeException('Book is currently unavailable.');
         }
 
-        if (has_open_borrow($conn, $userId, $bookId)) {
+        $existingBorrow = $conn->prepare(
+            "SELECT id FROM borrowed_books WHERE user_id = ? AND book_id = ? AND return_date IS NULL AND status IN ('pending', 'borrowed') LIMIT 1 FOR UPDATE"
+        );
+        if (!$existingBorrow) {
+            throw new RuntimeException('Unable to verify existing borrow requests.');
+        }
+
+        $existingBorrow->bind_param('ii', $userId, $bookId);
+        $existingBorrow->execute();
+        $hasExistingBorrow = $existingBorrow->get_result()->num_rows > 0;
+        $existingBorrow->close();
+
+        if ($hasExistingBorrow) {
             throw new RuntimeException('You already have an active borrow request for this book.');
         }
 

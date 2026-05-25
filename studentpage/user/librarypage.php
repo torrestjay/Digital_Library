@@ -30,7 +30,16 @@ foreach ($genres as $genre) {
   $book_stmt->bind_param('s', $genre);
   $book_stmt->execute();
   $result = $book_stmt->get_result();
-  $books_by_genre[$genre] = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+  $books = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+  
+  // Sort books: non-borrowed first, then borrowed
+  usort($books, function($a, $b) use ($borrowed_books) {
+    $a_borrowed = in_array((int)$a['id'], $borrowed_books, true) ? 1 : 0;
+    $b_borrowed = in_array((int)$b['id'], $borrowed_books, true) ? 1 : 0;
+    return $a_borrowed <=> $b_borrowed;
+  });
+  
+  $books_by_genre[$genre] = $books;
 }
 if ($book_stmt) {
   $book_stmt->close();
@@ -77,6 +86,7 @@ function render_book_card($book, $borrowed_books) {
   echo '</div>';
   echo '</a>';
   echo '<h4 class="book-title-text">' . $title . '</h4>';
+  echo '<p class="book-author-text">' . htmlspecialchars((string)($book['author'] ?? 'Unknown Author'), ENT_QUOTES, 'UTF-8') . '</p>';
   echo '<div class="book-rating" aria-label="Rated ' . $rating_label . ' out of 5">';
   echo '<span class="rating-stars">' . rating_stars($rating) . '</span>';
   echo '<span class="rating-value">' . $rating_label . '/5</span>';
@@ -84,14 +94,14 @@ function render_book_card($book, $borrowed_books) {
   echo '<div class="book-description">' . book_description($book) . '</div>';
   echo '<div class="book-actions">';
   if ($is_borrowed) {
-    echo '<a class="btn action-btn read-btn" href="read.php?id=' . $book_id . '">Read Now</a>';
+    echo '<a class="featured-btn secondary" href="read.php?id=' . $book_id . '">Read</a>';
   } else {
-    echo '<a class="btn action-btn read-btn" href="Book-Details.php?id=' . $book_id . '">View</a>';
+    echo '<a class="featured-btn secondary" href="Book-Details.php?id=' . $book_id . '">View</a>';
   }
   if ($is_borrowed) {
-    echo '<button type="button" class="btn action-btn borrowed" disabled>Borrowed</button>';
+    echo '<button type="button" class="featured-btn secondary" disabled style="opacity: 0.6; cursor: not-allowed;">Borrowed</button>';
   } else {
-    echo '<button type="button" class="btn action-btn borrow" onclick="openBorrowForm(' . $title_json . ', ' . $book_id . ')">Borrow</button>';
+    echo '<button type="button" class="featured-btn primary" onclick="openBorrowModal(' . $book_id . ', ' . $title_json . ')">Borrow Book</button>';
   }
   echo '</div>';
   echo '</article>';
@@ -103,7 +113,9 @@ function render_book_card($book, $borrowed_books) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Library</title>
+  <link rel="stylesheet" href="../css/design-system.css" />
   <link rel="stylesheet" href="../css/librarypage.css" />
+  <link rel="stylesheet" href="../css/user-shell.css" />
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     :root {
@@ -249,36 +261,37 @@ function render_book_card($book, $borrowed_books) {
       z-index: 2;
     }
     .genre-btn:hover {
-      transform: translateY(-50%) scale(1.04);
+      transform: translateY(-50%);
       background: #15597c;
     }
     .genre-btn.left { left: 0; }
     .genre-btn.right { right: 0; }
     .book-card {
-      background: var(--card);
-      border: 1px solid #e5edf5;
+      background: transparent;
+      border: none;
       border-radius: 14px;
-      box-shadow: 0 6px 14px rgba(14, 58, 93, 0.08);
-      padding: 12px;
+      box-shadow: none;
+      padding: 0;
       display: flex;
       flex-direction: column;
       height: 100%;
       min-width: 190px;
       max-width: 190px;
       transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
-      overflow: hidden;
+      overflow: visible;
       position: relative;
       z-index: 0;
     }
     .book-card:hover {
-      box-shadow: 0 12px 22px rgba(14, 58, 93, 0.14);
-      border-color: #c9d9e8;
+      box-shadow: none;
+      border-color: transparent;
     }
     .cover-link {
       display: block;
       border-radius: 10px;
       overflow: hidden;
       background: #e8eff7;
+      margin-bottom: 8px;
     }
     .book-cover-wrap {
       position: relative;
@@ -296,7 +309,7 @@ function render_book_card($book, $borrowed_books) {
       filter: brightness(0.98) saturate(1.02);
     }
     .book-title-text {
-      margin: 10px 0 8px;
+      margin: 0 0 6px 0;
       font-size: 0.94rem;
       color: var(--text);
       min-height: 40px;
@@ -307,12 +320,23 @@ function render_book_card($book, $borrowed_books) {
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
+    .book-author-text {
+      margin: 0 0 8px 0;
+      font-size: 0.8rem;
+      line-height: 1.2;
+      color: #5f7385;
+      font-weight: 500;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
     .book-rating {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      margin-bottom: 0;
+      margin-bottom: 8px;
       color: #d18f17;
       font-size: 0.78rem;
       font-weight: 700;
@@ -354,97 +378,78 @@ function render_book_card($book, $borrowed_books) {
       color: #7a8da0;
       white-space: nowrap;
     }
-    .book-actions {
-      margin-top: auto;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
+.book-actions{
+  margin-top: auto;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  width: 100%;
+}
+.featured-btn{
+  flex: 1;
+
+  height: 42px;
+  min-width: 0;
+
+  padding: 0 14px;
+
+  border-radius: 12px;
+  border: none;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text-decoration: none;
+
+  font-size: 0.82rem;
+  font-weight: 600;
+
+  transition: all 0.25s ease;
+  cursor: pointer;
+
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+.featured-btn.primary{
+  background: linear-gradient(
+    135deg,
+    #0e3a5d,
+    #1b678f
+  );
+
+  color: white;
+
+  box-shadow:
+    0 8px 18px rgba(14,58,93,0.18);
+}
+.featured-btn.secondary{
+  border: 1px solid #dbe7f2;
+  background: white;
+  color: #0e3a5d;
+}
+    .featured-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
     }
-    .btn.action-btn {
-      border: none;
-      border-radius: 9px;
-      padding: 10px 8px;
-      font-size: 0.84rem;
-      font-weight: 700;
-      text-align: center;
-      text-decoration: none;
-      cursor: pointer;
-      transition: transform 0.18s ease, filter 0.18s ease;
-      color: #fff;
+    .book-actions .btn {
+      width: auto;
+      min-height: 38px;
+      border-radius: 14px;
+      font-size: 0.82rem;
+      padding: 0 12px;
+      flex: 1 1 0;
     }
-    .btn.action-btn:hover {
+    .book-actions .btn:hover:not(.btn-disabled) {
       transform: translateY(-1px);
-      filter: brightness(1.04);
     }
-    .read-btn {
-      background: var(--read);
-    }
-    .borrow {
-      background: var(--borrow);
-    }
-    .borrow:hover {
-      background: var(--borrow-hover);
-    }
-    .borrowed {
-      background: #b4bcc3;
-      color: #f8fbff;
+    .book-actions .btn-disabled {
+      background: #d1d1d1;
+      color: #6b7a8f;
       cursor: not-allowed;
-      pointer-events: none;
-    }
-    #borrowPopup {
-      position: fixed;
-      inset: 0;
-      background-color: rgba(0, 0, 0, 0.6);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      padding: 18px;
-    }
-    .borrow-form {
-      background: #fff;
-      padding: 26px 24px;
-      border-radius: 18px;
-      width: 100%;
-      max-width: 410px;
-      text-align: center;
-      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.2);
-    }
-    .borrow-form img {
-      width: 72px;
-      margin-bottom: 12px;
-    }
-    .borrow-form h2 {
-      font-size: 1.15rem;
-      margin-bottom: 14px;
-      color: var(--text);
-    }
-    .borrow-form input,
-    .borrow-form label {
-      width: 100%;
-      display: block;
-      text-align: left;
-    }
-    .borrow-form input {
-      padding: 11px;
-      margin: 7px 0;
-      border-radius: 8px;
-      border: 1px solid #c8d4e2;
-      font-size: 0.92rem;
-    }
-    .borrow-form button {
-      width: 120px;
-      padding: 10px;
-      margin: 10px 5px 0;
-      background: var(--brand);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .borrow-form button:hover {
-      background: #12476f;
+      opacity: 0.75;
+      transform: none;
     }
     .empty-state {
       background: #fff;
@@ -454,6 +459,20 @@ function render_book_card($book, $borrowed_books) {
       color: var(--muted);
       text-align: center;
     }
+
+    .book-actions .featured-btn:hover:not(:disabled){
+  transform: translateY(-2px);
+}
+
+.book-actions .featured-btn:disabled{
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.book-actions .featured-btn{
+  width: 100%;
+}
+
     @media (max-width: 900px) {
       .content {
         padding: 18px;
@@ -476,8 +495,11 @@ function render_book_card($book, $borrowed_books) {
         min-width: 160px;
         max-width: 160px;
       }
-      .btn.action-btn {
+      .book-actions .btn {
         font-size: 0.78rem;
+      }
+      .book-actions {
+        flex-direction: column;
       }
       .book-rating {
         flex-direction: column;
@@ -505,25 +527,19 @@ function render_book_card($book, $borrowed_books) {
       </div>
     </aside>
     <main class="main-content">
-      <header class="header">
-        <div class="spacer"></div>
-        <div class="header-icons">
-          <a href="setting.php"><img class="icon" src="../Images/profile.png" alt="Profile"></a>
-        </div>
-      </header>
       <section class="content">
         <div class="dashboard-header">
           <h2>Available Books</h2>
         </div>
         <div class="search-bar">
-          <input type="text" id="search-input" placeholder="Search by title, author, or category" onkeyup="searchBooks()" />
-          <select id="category-filter" onchange="filterBooks()">
+          <input class="input-field" type="text" id="search-input" placeholder="Search by title, author, or category" onkeyup="searchBooks()" />
+          <select class="select-field" id="category-filter" onchange="filterBooks()">
             <option value="">All Genres</option>
             <?php foreach ($genres as $genre): ?>
               <option value="<?php echo htmlspecialchars($genre, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($genre, ENT_QUOTES, 'UTF-8'); ?></option>
             <?php endforeach; ?>
           </select>
-          <button type="button" aria-label="Search" onclick="searchBooks()">Search</button>
+          <button type="button" class="btn btn-primary" aria-label="Search" onclick="searchBooks()">Search</button>
         </div>
         <div id="book-results">
           <?php $genre_index = 0; foreach ($books_by_genre as $genre => $book_list): ?>
@@ -553,23 +569,6 @@ function render_book_card($book, $borrowed_books) {
       </section>
     </main>
   </div>
-  <div id="borrowPopup">
-    <form class="borrow-form" action="submit_borrow.php" method="POST" onsubmit="return confirmBorrowSubmit(event)">
-      <img src="../Images/logo.png" alt="Readly" />
-      <h2>Fill up the following</h2>
-      <input type="text" id="user_id" name="user_id" value="<?php echo $user_id; ?>" readonly>
-      <input type="email" name="email" placeholder="Email" required>
-      <input type="text" name="book_title" id="bookTitle" placeholder="Book Title" readonly>
-      <label for="borrow-date" style="margin-top: 6px; font-weight: 600; color: #2d4c64;">Select return date (max 7 days)</label>
-      <input type="date" id="borrow-date" name="date" required>
-      <input type="text" name="contact" class="contact_num" placeholder="Contact" required>
-      <input type="hidden" name="book_id" id="bookId">
-      <div>
-        <button type="submit">SUBMIT</button>
-        <button type="button" onclick="closeBorrowForm()">CANCEL</button>
-      </div>
-    </form>
-  </div>
   <script>
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('collapsed');
@@ -598,9 +597,6 @@ function render_book_card($book, $borrowed_books) {
         section.style.display = matches ? '' : 'none';
       });
     }
-    function closeBorrowForm() {
-      document.getElementById('borrowPopup').style.display = 'none';
-    }
     function scrollGenre(trackId, direction) {
       const track = document.getElementById(trackId);
       if (!track) {
@@ -611,53 +607,32 @@ function render_book_card($book, $borrowed_books) {
         behavior: 'smooth'
       });
     }
-    function initializeBorrowFormConstraints() {
-      document.querySelectorAll('.contact_num').forEach((input) => {
-        input.addEventListener('input', function(e) {
-          e.target.value = e.target.value.replace(/\D/g, '').slice(0, 11);
-        });
-      });
-      const dateInput = document.getElementById('borrow-date');
-      if (!dateInput) {
-        return;
-      }
-      const today = new Date();
-      const maxDate = new Date();
-      maxDate.setDate(today.getDate() + 7);
-      const formatDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      dateInput.min = formatDate(today);
-      dateInput.max = formatDate(maxDate);
-    }
-    function openBorrowForm(title, bookId) {
-      document.getElementById('bookTitle').value = title || '';
-      document.getElementById('bookId').value = bookId || '';
-      document.getElementById('borrowPopup').style.display = 'flex';
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', 'increment_view.php', true);
-      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-      xhr.send('book_id=' + encodeURIComponent(bookId));
-    }
-    function confirmBorrowSubmit(event) {
-      event.preventDefault();
-      const form = event.currentTarget;
+    function openBorrowModal(bookId, bookTitle) {
       Swal.fire({
-        title: 'Borrow this book now?',
-        text: 'This will create your borrow record immediately.',
+        title: 'Borrow this book?',
+        html: `<p style="color: #5f7385; margin-bottom: 12px;"><strong>${bookTitle}</strong></p><p style="color: #5f7385; font-size: 0.92rem;">This will add the book to your borrowed books list for 7 days.</p>`,
         icon: 'question',
+        iconColor: '#0e3a5d',
         showCancelButton: true,
-        confirmButtonColor: '#0e3a5d',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, borrow it',
-        cancelButtonText: 'Cancel'
+        confirmButtonText: 'Borrow Book',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#1b678f',
+        cancelButtonColor: '#e8eff7',
+        reverseButtons: true,
+        customClass: {
+          popup: 'swal-modern',
+          title: 'swal-title',
+          confirmButton: 'swal-confirm',
+          cancelButton: 'swal-cancel'
+        }
       }).then((result) => {
         if (result.isConfirmed) {
-          form.submit();
+          window.location.href = 'borrow.php?book_id=' + encodeURIComponent(bookId);
         }
       });
-      return false;
     }
     document.addEventListener('DOMContentLoaded', function() {
-      initializeBorrowFormConstraints();
+      // Library page initialization
     });
   </script>
   <?php if (!empty($success)): ?>

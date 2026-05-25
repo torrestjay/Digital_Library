@@ -153,285 +153,370 @@ if (!empty($admin_info_data['birth_date'])) {
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Admin Setting</title>
+  <title>Account Settings</title>
+  <link rel="stylesheet" href="../css/design-system.css" />
+  <link rel="stylesheet" href="../css/user-shell.css" />
   <style>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-    body,
-    html {
-      height: 100%;
-    font-family: 'Poppins', sans-serif;
-      background-color: #f9f7f4;
+    
+    html, body {
+      min-height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(180deg, #f8fbff 0%, #eef4fa 100%);
+      color: #14324a;
+      overflow-x: hidden;
     }
-    .container {
-      display: flex;
-      height: 100vh;
-    }
-    .sidebar {
-      background-color: #0e3a5d;
-      width: 250px;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      transition: width 0.3s ease;
-    }
-    .sidebar.collapsed {
-      width: 70px;
-    }
-    .sidebar.collapsed span {
-      display: none;
-    }
-    .logo {
-      height: 70px;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      cursor: pointer;
-      padding: 10px;
-    }
-    .logo img {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-    }
-    .nav {
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      padding-top: 20px;
-    }
-    .nav a,
-    .sign-out a {
-      display: flex;
-      align-items: center;
-      padding: 15px 20px;
-      color: white;
-      text-decoration: none;
-      transition: background 0.2s;
-    }
-    .nav a:hover,
-    .sign-out a:hover {
-      background-color: #12476f;
-    }
-    .icon {
-      width: 25px;
-      height: 25px;
-    }
-    .nav span,
-    .sign-out span {
-      margin-left: 10px;
-      white-space: nowrap;
-    }
-    .sign-out {
-      margin-top: auto;
-    }
-    .header {
-      position: fixed;
-      top: 0;
-      left: 250px;
-      width: calc(100% - 250px);
-      z-index: 1000;
-      padding: 12px 20px;
-      background-color: #ffffff;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #e0e0e0;
-      height: 60px;
-      box-sizing: border-box;
-      transition: left 0.3s ease, width 0.3s ease;
-    }
-    .header-icons .icon {
-      margin-left: 10px;
-      cursor: pointer;
-      width: 30px;
-      height: 30px;
-    }
+    
     .main-content {
-      flex: 1;
-      padding: 60px 20px 20px;
-      background-color: #f5f5f5;
-      overflow-y: auto;
-      transition: padding-left 0.3s ease;
+      padding: 26px;
     }
+
     h2 {
-      font-size: 24px;
-      margin-bottom: 5px;
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #0e3a5d;
     }
+
     p {
-      font-size: 14px;
-      color: #333;
-      margin-bottom: 20px;
+      font-size: 0.95rem;
+      color: #5f7385;
+      margin-bottom: 24px;
     }
+
     .tabs {
-      margin: 10px 0 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 14px 0 24px;
     }
-    .tabs button {
-      background: #003d5c;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      margin-right: 10px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
+
+    .tabs .btn {
+      min-height: 44px;
+      padding: 0 20px;
+      border-radius: 12px;
+      font-weight: 700;
+      transition: transform 0.2s ease, background 0.2s ease;
     }
+
+    .tabs .btn:hover {
+      transform: translateY(-1px);
+    }
+
     .account-box {
       background: white;
-      padding: 20px;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      margin-top: 10px;
+      padding: 28px;
+      border-radius: 24px;
+      border: 1px solid #e5edf5;
+      box-shadow: 0 10px 26px rgba(14, 58, 93, 0.08);
+      margin-bottom: 24px;
     }
+
+    .account-box h3 {
+      margin: 0 0 18px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #0e3a5d;
+    }
+
+    .account-box h3:not(:first-child) {
+      margin-top: 24px;
+    }
+
     .account-row {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 15px;
+      gap: 12px;
+      margin-bottom: 18px;
       font-size: 16px;
+      flex-wrap: wrap;
     }
+
+    .account-row label {
+      font-weight: 600;
+      min-width: 120px;
+      color: #14324a;
+    }
+
+    .account-row span {
+      color: #5f7385;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .birthdate-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .birthdate-row label {
+      margin-top: 0;
+    }
+
     .birthdate-row select,
-    .birthdate-row input[type="text"] {
-      padding: 5px;
+    .birthdate-row input[type="text"],
+    .custom-input,
+    .custom-input-address {
+      padding: 12px 14px;
       font-size: 14px;
-      margin-left: 5px;
+      border: 1px solid #d9e5f0;
+      border-radius: 14px;
+      background: #fff;
+      color: #14324a;
+      transition: all 0.2s ease;
+      font-family: 'Poppins', sans-serif;
     }
-    .change-link {
-      color: #005b7f;
-      text-decoration: none;
-      font-weight: 500;
+
+    .birthdate-row select:focus,
+    .birthdate-row input[type="text"]:focus,
+    .custom-input:focus,
+    .custom-input-address:focus {
+      outline: none;
+      border-color: #0e3a5d;
+      box-shadow: 0 0 0 3px rgba(14, 58, 93, 0.1);
+      background: #fafbfc;
     }
-    .change-link:hover {
-      text-decoration: underline;
-    }
-    .account-box h3 {
-      margin: 20px 0 10px;
-      font-size: 18px;
-    }
-    .personal-info-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-    .personal-info-grid .wide {
-      grid-column: span 4;
-    }
-    .personal-info-grid input[type="text"] {
-      padding: 8px;
-      font-size: 14px;
-      border: 1px solid #aaa;
-      border-radius: 4px;
-    }
-    .error {
-      color: #d9534f;
-      font-size: 14px;
-      margin-top: 5px;
-    }
-    .error-field {
-      border: 1px solid #d9534f !important;
-    }
-    .success-message {
-      color: #5cb85c;
-      background-color: #f8f9fa;
-      padding: 10px;
-      border-radius: 4px;
-      margin-bottom: 15px;
-      border: 1px solid #5cb85c;
-    }
-    .update-btn {
-      background: #005b7f;
-      color: white;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 500;
-      margin-top: 10px;
-    }
-    .update-btn:hover {
-      background: #00415a;
-    }
+
     .custom-input {
       width: 300px;
-      padding: 8px 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-      transition: border-color 0.3s ease;
     }
-    .custom-input:focus {
-      border-color: #007bff;
-      outline: none;
-    }
+
     .custom-input-address {
       width: 100%;
       max-width: 900px;
-      padding: 8px 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-      transition: border-color 0.3s ease;
     }
-    .custom-input-address:focus {
-      border-color: #007bff;
-      outline: none;
+
+    .birthdate-row select,
+    .birthdate-row input[type="text"] {
+      max-width: 140px;
     }
+
+    .error {
+      color: #d43d3d;
+      font-size: 13px;
+      margin-top: 6px;
+      display: block;
+      font-weight: 500;
+    }
+
     .error-field {
-      border-color: red !important;
-      background-color: #ffe6e6;
+      border-color: #d43d3d !important;
+      background-color: #fff5f5 !important;
     }
-    @media (max-width: 768px) {
-      .sidebar {
-        position: fixed;
-        height: 100%;
-        z-index: 1001;
-        left: 0;
-        top: 0;
+
+    .error-field:focus {
+      border-color: #d43d3d !important;
+      box-shadow: 0 0 0 3px rgba(212, 61, 61, 0.1) !important;
+    }
+
+    .success-message {
+      color: #15597c;
+      background-color: #e8f2fb;
+      padding: 14px 18px;
+      border-radius: 16px;
+      margin-bottom: 18px;
+      border: 1px solid #b6d5ec;
+      font-weight: 500;
+    }
+
+    .personal-info-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .personal-info-grid > div {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .personal-info-grid .wide {
+      grid-column: span 4;
+    }
+
+    .personal-info-grid label {
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #14324a;
+      font-size: 0.9rem;
+    }
+
+    .personal-info-grid input[type="text"],
+    .personal-info-grid select {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 14px;
+      border: 1px solid #d9e5f0;
+      border-radius: 14px;
+      background: #fff;
+      color: #14324a;
+      transition: all 0.2s ease;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .personal-info-grid input[type="text"]:focus,
+    .personal-info-grid select:focus {
+      outline: none;
+      border-color: #0e3a5d;
+      box-shadow: 0 0 0 3px rgba(14, 58, 93, 0.1);
+      background: #fafbfc;
+    }
+
+    .personal-info-grid input.error-field,
+    .personal-info-grid select.error-field {
+      border-color: #d43d3d !important;
+      background-color: #fff5f5 !important;
+    }
+
+    .account-box button[type="submit"],
+    .account-box button.btn-primary,
+    .account-box input[type="submit"] {
+      background: linear-gradient(135deg, #0e3a5d, #1b678f);
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+      margin-top: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .account-box button[type="submit"]:hover,
+    .account-box button.btn-primary:hover,
+    .account-box input[type="submit"]:hover {
+      background: linear-gradient(135deg, #0a2a47, #15527a);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px rgba(14, 58, 93, 0.2);
+    }
+
+    .account-box button[type="submit"]:focus,
+    .account-box button.btn-primary:focus,
+    .account-box input[type="submit"]:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(14, 58, 93, 0.2);
+    }
+
+    .change-link {
+      color: #0e3a5d;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .change-link:hover {
+      text-decoration: underline;
+      color: #1b678f;
+    }
+
+    @media (max-width: 1100px) {
+      .personal-info-grid {
+        grid-template-columns: repeat(2, 1fr);
       }
-      .header {
-        left: 70px;
-        width: calc(100% - 70px);
+
+      .personal-info-grid .wide {
+        grid-column: span 2;
       }
-      .sidebar:not(.collapsed)~.main-content .header {
-        left: 250px;
-        width: calc(100% - 250px);
-      }
-      .main-content {
-        padding-left: 70px;
-      }
-      .sidebar:not(.collapsed)~.main-content {
-        padding-left: 250px;
-      }
-      .account-box {
-        padding: 16px;
-      }
-      .account-row {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-      }
-      .custom-input,
-      .custom-input-address {
+    }
+
+    @media (max-width: 900px) {
+      .custom-input {
         width: 100%;
         max-width: none;
       }
+
+      .custom-input-address {
+        width: 100%;
+      }
+
+      .birthdate-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
       .birthdate-row select,
       .birthdate-row input[type="text"] {
         width: 100%;
-        margin-left: 0;
-        margin-bottom: 8px;
+        max-width: none;
       }
+
+      .account-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .account-row label {
+        margin-bottom: 6px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        padding: 18px;
+      }
+
+      h2 {
+        font-size: 1.6rem;
+      }
+
+      .account-box {
+        padding: 20px;
+      }
+
       .personal-info-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
       }
+
       .personal-info-grid .wide {
         grid-column: span 1;
+      }
+
+      .account-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .account-row label {
+        min-width: auto;
+      }
+
+      .account-row span {
+        min-width: auto;
+      }
+
+      .custom-input,
+      .custom-input-address {
+        width: 100% !important;
+        max-width: none !important;
+      }
+
+      .birthdate-row select,
+      .birthdate-row input[type="text"] {
+        width: 100% !important;
+        max-width: none !important;
+      }
+
+      .account-box button[type="submit"],
+      .account-box button.btn-primary,
+      .account-box input[type="submit"] {
+        width: 100%;
       }
     }
   </style>
@@ -448,21 +533,20 @@ if (!empty($admin_info_data['birth_date'])) {
       <a href="borrowed-books.php"><img class="icon" src="../Images/borrowed.png" alt="Borrowed Books Icon" /><span>Borrowed Books</span></a>
       <a href="track&record.php"><img class="icon" src="../Images/Track.png" alt="Track Icon" /><span>Track and Record</span></a>
       <a href="support.php"><img class="icon" src="../Images/Support.png" alt="Support Icon" /><span>Support Page</span></a>
-      <a href="setting.php"><img class="icon" src="../Images/settings.png" alt="Settings Icon" /><span>Account Settings</span></a>
+      <a href="setting.php" class="active"><img class="icon" src="../Images/settings.png" alt="Settings Icon" /><span>Account Settings</span></a>
     </nav>
       <div class="sign-out">
-        <a href="../logout.php" onclick="toggleSidebar()"><img class="icon" src="../Images/signout.png" alt="Signout Icon" /><span>Sign Out</span></a>
+        <a href="../logout.php"><img class="icon" src="../Images/signout.png" alt="Signout Icon" /><span>Sign Out</span></a>
       </div>
     </aside>
     <main class="main-content">
-      <header class="header">
-        <div class="spacer"></div>
-        <div class="header-icons">
-          <a href="setting.php"><img class="icon" src="../Images/profile.png"></a> 
-        </div>
-      </header>
+      <?php if (!empty($success)): ?>
+        <div class="success-message">✓ <?php echo htmlspecialchars($success); ?></div>
+      <?php endif; ?>
+
       <h2>Account Settings</h2>
       <p>Manage your personal information and account preferences</p>
+      
       <div class="account-box">
         <!-- Account Information Form -->
         <form action="" method="POST" onsubmit="return confirmFormSubmit(event, 'Do you want to update your account information?')">
@@ -475,29 +559,27 @@ if (!empty($admin_info_data['birth_date'])) {
             <label><strong>Full Name:</strong></label>
             <input type="hidden" name="user_id" value="<?php echo $user_id; ?>">
             <input type="text" name="fullname"
-              class="custom-input"
-              value="<?php echo htmlspecialchars($user_data['fullname'] ?? ''); ?>"
-              <?php echo isset($errors['account']['fullname']) ? 'class="error-field"' : ''; ?>>
+              class="custom-input <?php echo isset($errors['account']['fullname']) ? 'error-field' : ''; ?>"
+              value="<?php echo htmlspecialchars($user_data['fullname'] ?? ''); ?>">
             <?php if (isset($errors['account']['fullname'])): ?>
               <span class="error"><?php echo htmlspecialchars($errors['account']['fullname']); ?></span>
             <?php endif; ?>
           </div>
           <div class="account-row">
             <label><strong>Password:</strong></label>
-            <input class="custom-input" type="password" name="password" placeholder="Leave empty to keep current"
-              <?php echo isset($errors['account']['password']) ? 'class="error-field"' : ''; ?>>
+            <input class="custom-input <?php echo isset($errors['account']['password']) ? 'error-field' : ''; ?>" type="password" name="password" placeholder="Leave empty to keep current">
             <?php if (isset($errors['account']['password'])): ?>
               <span class="error"><?php echo htmlspecialchars($errors['account']['password']); ?></span>
             <?php endif; ?>
           </div>
-          <button type="submit" name="update_account" class="update-btn">Update Account</button>
+          <button type="submit" name="update_account" class="btn btn-primary">Update Account</button>
         </form>
         <!-- Personal Information Form -->
         <form action="" method="POST" onsubmit="return confirmFormSubmit(event, 'Do you want to save your personal information?')">
           <h3>Personal Information</h3>
           <div class="account-row birthdate-row">
             <label><strong>Birth Date:</strong></label>
-            <select name="birth_month" <?php echo isset($errors['info']['birth_date']) ? 'class="error-field"' : ''; ?>>
+            <select name="birth_month" class="<?php echo isset($errors['info']['birth_date']) ? 'error-field' : ''; ?>">
               <option value="">MM</option>
               <?php for ($i = 1; $i <= 12; $i++): ?>
                 <option value="<?php echo $i; ?>" <?php echo ($birth_month == $i) ? 'selected' : ''; ?>>
@@ -505,7 +587,7 @@ if (!empty($admin_info_data['birth_date'])) {
                 </option>
               <?php endfor; ?>
             </select>
-            <select name="birth_day" <?php echo isset($errors['info']['birth_date']) ? 'class="error-field"' : ''; ?>>
+            <select name="birth_day" class="<?php echo isset($errors['info']['birth_date']) ? 'error-field' : ''; ?>">
               <option value="">DD</option>
               <?php for ($i = 1; $i <= 31; $i++): ?>
                 <option value="<?php echo $i; ?>" <?php echo ($birth_day == $i) ? 'selected' : ''; ?>>
@@ -514,55 +596,48 @@ if (!empty($admin_info_data['birth_date'])) {
               <?php endfor; ?>
             </select>
             <input type="text" name="birth_year" placeholder="YYYY"
+              class="<?php echo isset($errors['info']['birth_date']) ? 'error-field' : ''; ?>"
               value="<?php echo htmlspecialchars($birth_year); ?>"
               maxlength="4" pattern="\d{4}" inputmode="numeric"
-              oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4);"
-              <?php echo isset($errors['info']['birth_date']) ? 'class="error-field"' : ''; ?>>
-            <?php
-            // PHP validation
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-              if (!ctype_digit($birth_year) || strlen($birth_year) !== 4) {
-                $errors['info']['birth_date'] = "";
-              } elseif ((int)$birth_year > ($current_year - 5)) {
-                $errors['info']['birth_date'] = "Birth year must be at least 5 years before the current year.";
-              }
-            }
-            if (isset($errors['info']['birth_date'])): ?>
+              oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4);">
+            <?php if (isset($errors['info']['birth_date'])): ?>
               <span class="error"><?php echo htmlspecialchars($errors['info']['birth_date']); ?></span>
             <?php endif; ?>
           </div>
           <div class="personal-info-grid">
             <div>
-              <label for="last_name">Last Name:</label><br>
-              <input type="text" id="last_name" name="last_name" placeholder="Lastname"
-                class="custom-input <?php echo isset($errors['info']['last_name']) ? 'error-field' : ''; ?>"
-                value="<?php echo htmlspecialchars($admin_info_data['last_name'] ?? ''); ?>">
-              <?php if (isset($errors['info']['last_name'])): ?>
-                <span class="error"><?php echo htmlspecialchars($errors['info']['last_name']); ?></span>
-              <?php endif; ?>
-            </div>
-            <div>
-              <label for="first_name">First Name:</label><br>
-              <input type="text" id="first_name" name="first_name" placeholder="Firstname"
-                class="custom-input <?php echo isset($errors['info']['first_name']) ? 'error-field' : ''; ?>"
+              <label for="first_name">First Name:</label>
+              <input type="text" id="first_name" name="first_name" placeholder="First Name"
+                class="<?php echo isset($errors['info']['first_name']) ? 'error-field' : ''; ?>"
                 value="<?php echo htmlspecialchars($admin_info_data['first_name'] ?? ''); ?>">
               <?php if (isset($errors['info']['first_name'])): ?>
                 <span class="error"><?php echo htmlspecialchars($errors['info']['first_name']); ?></span>
               <?php endif; ?>
             </div>
             <div>
-              <label for="age">Age:</label><br>
+              <label for="last_name">Last Name:</label>
+              <input type="text" id="last_name" name="last_name" placeholder="Last Name"
+                class="<?php echo isset($errors['info']['last_name']) ? 'error-field' : ''; ?>"
+                value="<?php echo htmlspecialchars($admin_info_data['last_name'] ?? ''); ?>">
+              <?php if (isset($errors['info']['last_name'])): ?>
+                <span class="error"><?php echo htmlspecialchars($errors['info']['last_name']); ?></span>
+              <?php endif; ?>
+            </div>
+            <div>
+              <label for="age">Age:</label>
               <input type="text" id="age" name="age" placeholder="Age"
-                class="custom-input <?php echo isset($errors['info']['age']) ? 'error-field' : ''; ?>"
-                value="<?php echo htmlspecialchars($admin_info_data['age'] ?? ''); ?>">
+                class="<?php echo isset($errors['info']['age']) ? 'error-field' : ''; ?>"
+                value="<?php echo htmlspecialchars($admin_info_data['age'] ?? ''); ?>"
+                inputmode="numeric" pattern="\d*"
+                oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3);">
               <?php if (isset($errors['info']['age'])): ?>
                 <span class="error"><?php echo htmlspecialchars($errors['info']['age']); ?></span>
               <?php endif; ?>
             </div>
             <div>
-              <label for="contact">Contact Number:</label><br>
-              <input type="text" id="contact" name="contact" placeholder="Contact"
-                class="custom-input <?php echo isset($errors['info']['contact']) ? 'error-field' : ''; ?>"
+              <label for="contact">Contact Number:</label>
+              <input type="text" id="contact" name="contact" placeholder="Phone Number"
+                class="<?php echo isset($errors['info']['contact']) ? 'error-field' : ''; ?>"
                 value="<?php echo htmlspecialchars($admin_info_data['contact'] ?? ''); ?>"
                 maxlength="11" inputmode="numeric" pattern="\d{10,11}"
                 oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11);">
@@ -571,18 +646,21 @@ if (!empty($admin_info_data['birth_date'])) {
               <?php endif; ?>
             </div>
             <div class="wide">
-              <label for="address">Address:</label><br>
+              <label for="address">Address:</label>
               <input type="text" id="address" name="address" placeholder="Address"
-                class="custom-input-address"
+                class="custom-input-address <?php echo isset($errors['info']['address']) ? 'error-field' : ''; ?>"
                 value="<?php echo htmlspecialchars($admin_info_data['address'] ?? ''); ?>">
+              <?php if (isset($errors['info']['address'])): ?>
+                <span class="error"><?php echo htmlspecialchars($errors['info']['address']); ?></span>
+              <?php endif; ?>
             </div>
-             <div>
-              <label for="gender">Gender:</label><br>
+            <div>
+              <label for="gender">Gender:</label>
               <?php if (!empty($admin_info_data['gender'])): ?>
                 <input type="text" id="gender" name="gender" class="custom-input" readonly
                   value="<?php echo htmlspecialchars($admin_info_data['gender']); ?>">
               <?php else: ?>
-                <select id="gender" name="gender" class="custom-input" required>
+                <select id="gender" name="gender" required>
                   <option value="">Select Gender</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
@@ -592,45 +670,37 @@ if (!empty($admin_info_data['birth_date'])) {
             </div>
           </div>
           <input type="hidden" name="user_id" value="<?php echo $user_id; ?>">
-          <button type="submit" name="update_info" class="update-btn">Update Personal Information</button>
+          <button type="submit" name="update_info" class="btn btn-primary">Update Personal Information</button>
         </form>
       </div>
     </main>
   </div>
+
+  <!-- SweetAlert2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
   <script>
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
-      const header = document.querySelector('.header');
       sidebar.classList.toggle('collapsed');
-      if (sidebar.classList.contains('collapsed')) {
-        header.style.left = '70px';
-        header.style.width = 'calc(100% - 70px)';
-      } else {
-        header.style.left = '250px';
-        header.style.width = 'calc(100% - 250px)';
-      }
     }
-    window.addEventListener('DOMContentLoaded', () => {
-      if (window.innerWidth <= 768) {
-        const sidebar = document.getElementById('sidebar');
-        sidebar.classList.add('collapsed');
-        const header = document.querySelector('.header');
-        header.style.left = '70px';
-        header.style.width = 'calc(100% - 70px)';
-      }
-    });
+
     function confirmFormSubmit(event, message) {
       event.preventDefault();
       const form = event.currentTarget;
       Swal.fire({
-        title: 'Are you sure?',
+        title: 'Confirm',
         text: message,
         icon: 'question',
+        iconColor: '#0e3a5d',
         showCancelButton: true,
         confirmButtonColor: '#0e3a5d',
-        cancelButtonColor: '#d33',
+        cancelButtonColor: '#e8eff7',
         confirmButtonText: 'Yes, continue',
-        cancelButtonText: 'Cancel'
+        cancelButtonText: 'Cancel',
+        customClass: {
+          cancelButton: 'swal-secondary-btn'
+        }
       }).then((result) => {
         if (result.isConfirmed) {
           form.submit();
@@ -639,33 +709,47 @@ if (!empty($admin_info_data['birth_date'])) {
       return false;
     }
   </script>
-  <!-- SweetAlert2 CDN -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<?php if (!empty($success)): ?>
-  <script>
-    Swal.fire({
-      toast: true,
-      position: 'top-end',
-      icon: 'success',
-      title: <?php echo json_encode($success); ?>,
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true,
-    });
-  </script>
-<?php endif; ?>
-<?php if (!empty($errors['account']['database'])): ?>
-  <script>
-    Swal.fire({
-      toast: true,
-      position: 'top-end',
-      icon: 'error',
-      title: <?php echo json_encode($errors['account']['database']); ?>,
-      showConfirmButton: false,
-      timer: 5000,
-      timerProgressBar: true,
-    });
-  </script>
-<?php endif; ?>
+
+  <?php if (!empty($success)): ?>
+    <script>
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: <?php echo json_encode($success); ?>,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
+    </script>
+  <?php endif; ?>
+
+  <?php if (!empty($errors['account']['database'])): ?>
+    <script>
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: <?php echo json_encode($errors['account']['database']); ?>,
+        showConfirmButton: false,
+        timer: 5000,
+        timerProgressBar: true,
+      });
+    </script>
+  <?php endif; ?>
+
+  <?php if (!empty($errors['info']['database'])): ?>
+    <script>
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: <?php echo json_encode($errors['info']['database']); ?>,
+        showConfirmButton: false,
+        timer: 5000,
+        timerProgressBar: true,
+      });
+    </script>
+  <?php endif; ?>
 </body>
 </html>

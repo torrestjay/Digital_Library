@@ -3,22 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <title>User Settting Notification</title>
+  <link rel="stylesheet" href="../css/design-system.css" />
   <style>
     * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      min-height: 100%;
+      font-family: 'Poppins', sans-serif;
       background: linear-gradient(180deg, #f8fbff 0%, #eef4fa 100%);
       color: #14324a;
       overflow-x: hidden;
-      box-sizing: border-box;
-    }
-    body, html {
-      height: 100%;
-      background-color: transparent;
-      background-color: #f9f7f4;
     }
     .container {
       display: flex;
-      height: 100vh;
+      min-height: 100vh;
     }
     .sidebar {
       background-color: #0e3a5d;
@@ -28,12 +29,8 @@
       flex-direction: column;
       transition: width 0.3s ease;
     }
-      border: 1px solid #e5edf5;
     .sidebar.collapsed {
       width: 70px;
-    }
-    .sidebar.collapsed span {
-      display: none;
     }
     .logo {
       height: 70px;
@@ -61,7 +58,7 @@
       padding: 15px 20px;
       color: white;
       text-decoration: none;
-      transition: background 0.2s;
+      transition: background 0.2s ease;
     }
     .nav a:hover,
     .sign-out a:hover {
@@ -101,16 +98,18 @@
       width: 30px;
       height: 30px;
     }
+  </style>
+  <link rel="stylesheet" href="../css/user-shell.css" />
     .main-content {
       flex: 1;
-      padding: 60px 20px 20px; /* moved up from 80px */
-      background-color: #f5f5f5;
+      padding: 80px 24px 24px;
+      background: linear-gradient(180deg, #f8fbff 0%, #eef4fa 100%);
       overflow-y: auto;
       transition: padding-left 0.3s ease;
     }
     h2 {
       font-size: 24px;
-      margin-bottom: 5px;
+      margin-bottom: 10px;
     }
     p {
       font-size: 14px;
@@ -118,29 +117,51 @@
       margin-bottom: 20px;
     }
     .tabs {
-      margin: 10px 0 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 14px 0 24px;
     }
     .tabs button {
-      background: #003d5c;
+      background: #0e3a5d;
       color: white;
-      padding: 10px 20px;
+      padding: 10px 18px;
       border: none;
-      margin-right: 10px;
-      border-radius: 5px;
+      border-radius: 999px;
       cursor: pointer;
-      font-weight: bold;
+      font-weight: 700;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .tabs button:hover {
+      background: #15597c;
+      transform: translateY(-1px);
     }
     .box {
-      border: 1px solid #ccc;
-      padding: 15px;
+      border: 1px solid #e5edf5;
+      padding: 22px;
       margin-bottom: 20px;
-      border-radius: 5px;
+      border-radius: 24px;
       background: white;
+      box-shadow: 0 14px 28px rgba(14, 58, 93, 0.08);
+    }
+    .box h4 {
+      margin-bottom: 16px;
+      color: #0e3a5d;
     }
     .setting-row {
       display: flex;
       justify-content: space-between;
-      padding: 5px 0;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid #eef4f7;
+    }
+    .setting-row:last-child {
+      border-bottom: none;
+    }
+    .setting-row span {
+      color: #14324a;
+      font-size: 14px;
     }
     @media (max-width: 768px) {
       .sidebar {
@@ -196,9 +217,9 @@
       <h2>Settings</h2>
       <p>Manage your personal information and account preferences</p>
       <div class="tabs">
-        <button>Account</button>
-        <button>Notification</button>
-        <button>Content Preferences</button>
+        <button class="btn btn-secondary">Account</button>
+        <button class="btn btn-secondary">Notification</button>
+        <button class="btn btn-secondary">Content Preferences</button>
       </div>
       <div class="box">
         <h4>Story Updates & Recommendations</h4>

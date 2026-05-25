@@ -1,0 +1,132 @@
+.login-container {
+  display: flex;
+  min-height: 100vh;
+}
+.login-image {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(16px, 3vw, 32px);
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4fa 100%);
+  overflow: hidden;
+}
+.login-image img {
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  border-radius: 16px;
+  box-shadow: 0 24px 52px rgba(14, 58, 93, 0.12);
+  object-fit: contain;
+  display: block;
+}
+.login-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 80px;
+  gap: 24px;
+}
+.login-form h1 {
+  font-size: 2.8rem;
+  color: var(--brand);
+  margin-bottom: 4px;
+}
+.login-form p {
+  color: var(--text-muted);
+  max-width: 380px;
+}
+.login-form form {
+  display: grid;
+  gap: 16px;
+}
+.login-form input {
+  width: 100%;
+}
+.login-form a {
+  color: var(--brand-strong);
+  font-weight: 600;
+  text-decoration: none;
+}
+.login-form a:hover {
+  text-decoration: underline;
+}
+.login-form .form-alert {
+  color: var(--danger);
+  font-size: 0.95rem;
+}
+.divider {
+  text-align: center;
+  margin: 20px 0;
+  position: relative;
+}
+.divider::before,
+.divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 45%;
+  height: 1px;
+  background: rgba(20, 50, 74, 0.08);
+}
+.divider::before { left: 0; }
+.divider::after { right: 0; }
+.divider span {
+  padding: 0 14px;
+  background: #f8fbff;
+  color: var(--text-muted);
+}
+.google-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.google-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  box-shadow: 0 6px 18px rgba(14, 58, 93, 0.08);
+}
+.google-btn:hover {
+  background: #f8fbff;
+  border-color: var(--brand);
+  box-shadow: 0 4px 12px rgba(27, 103, 143, 0.15);
+  transform: translateY(-2px);
+}
+.google-btn:active {
+  transform: translateY(0);
+}
+.google-btn img {
+  width: 24px;
+  height: 24px;
+}
+@media (max-width: 960px) {
+  .login-container {
+    flex-direction: column;
+  }
+  .login-form {
+    padding: 32px;
+    align-items: center;
+  }
+  .login-form form {
+    width: 100%;
+  }
+  .login-image {
+    padding: 20px;
+  }
+  .google-btn {
+    width: 56px;
+    height: 56px;
+  }
+}

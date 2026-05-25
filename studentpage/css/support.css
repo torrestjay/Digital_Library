@@ -217,14 +217,7 @@ body, html {
   height: 100px;
   resize: vertical;
 }
-.contact-form button {
-  background-color: #0e3a5d;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-}
+/* Support form button uses design-system.css .btn-primary class */
 .contact-options {
   flex: 1;
 }

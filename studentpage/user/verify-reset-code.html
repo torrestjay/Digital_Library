@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verify Code | Digital Library</title>
+  <link rel="stylesheet" href="../css/design-system.css" />
+  <link rel="stylesheet" href="../css/login.css" />
+  <script src="https://kit.fontawesome.com/3b07bc6295.js" crossorigin="anonymous"></script>
+  <style>
+    .verify-image {
+      background: linear-gradient(180deg, #f8fbff 0%, #eef4fa 100%);
+    }
+    .form-alert {
+      background: #fef2f2;
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      padding: 14px;
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+    }
+    .form-success {
+      background: #f0fdf4;
+      border: 1px solid var(--success);
+      color: var(--success);
+      padding: 14px;
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+    }
+    .code-input-group {
+      display: grid;
+      gap: 16px;
+    }
+    .resend-link {
+      text-align: center;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-top: 16px;
+    }
+    .resend-link a {
+      color: var(--brand-strong);
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .resend-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div id="toastBox"></div>
+  <div class="login-container">
+    <!-- Left Side Image -->
+    <div class="login-image verify-image">
+      <img src="../Images/login.png" alt="Verify Code Image" />
+    </div>
+    <!-- Right Side Form -->
+    <div class="login-form">
+      <h1>Verify Code</h1>
+      <p><a href="forgotpassword.html" style="display: inline-flex; align-items: center; gap: 6px; color: var(--brand-strong); text-decoration: none; font-weight: 500;"><i class="fas fa-arrow-left"></i> Back to Forgot Password</a></p>
+      <p style="color: var(--text-muted); margin-bottom: 24px;">Enter the verification code sent to your email address.</p>
+      
+      <div id="formContainer">
+        <form method="POST" action="reset-password.php" id="verifyForm">
+          <input type="hidden" id="email" name="email" />
+          <input class="input-field" type="text" name="verification_code" id="verificationCode" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric" required pattern="[0-9]{6}" />
+          <button type="submit" class="btn btn-primary">Verify Code</button>
+        </form>
+        
+        <div class="resend-link">
+          Didn't receive the code? <a href="#" onclick="resendCode(event)">Resend</a>
+        </div>
+      </div>
+      
+      <div id="messageContainer"></div>
+    </div>
+  </div>
+  <script>
+    let toastBox = document.getElementById('toastBox');
+    
+    function showToast(msg, isError = false) {
+        let toast = document.createElement('div'); 
+        toast.classList.add('toast');
+        toast.innerHTML = msg;
+        toastBox.appendChild(toast); 
+        if (isError) {
+            toast.classList.add('error');
+        }
+        const sound = document.getElementById('notifySound');
+        if (sound) sound.play();
+        setTimeout(() => {
+            toast.remove();
+        }, 4000);
+    }
+    
+    // Get email from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const email = urlParams.get('email');
+    
+    if (!email) {
+        window.location.href = 'forgotpassword.html';
+    }
+    
+    document.getElementById('email').value = email;
+    
+    // Format input to only allow numbers
+    document.getElementById('verificationCode').addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 6);
+    });
+    
+    document.getElementById('verifyForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const code = document.getElementById('verificationCode').value;
+      const messageContainer = document.getElementById('messageContainer');
+      
+      if (code.length !== 6) {
+        messageContainer.innerHTML = '<div class="form-alert"><i class="fas fa-exclamation-circle"></i> Please enter a valid 6-digit code.</div>';
+        showToast('Invalid code format', true);
+        return;
+      }
+      
+      try {
+        const response = await fetch('verify-code.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: 'email=' + encodeURIComponent(email) + '&verification_code=' + encodeURIComponent(code)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showToast('<i class="fa-solid fa-circle-check"></i> Code verified successfully!');
+          messageContainer.innerHTML = '<div class="form-success"><i class="fas fa-check-circle"></i> Code verified! Redirecting to password reset...</div>';
+          setTimeout(() => {
+            window.location.href = 'reset-new-password.html?email=' + encodeURIComponent(email) + '&token=' + encodeURIComponent(result.token);
+          }, 2000);
+        } else {
+          messageContainer.innerHTML = '<div class="form-alert"><i class="fas fa-exclamation-circle"></i> ' + result.message + '</div>';
+          showToast('Error: ' + result.message, true);
+        }
+      } catch (error) {
+        messageContainer.innerHTML = '<div class="form-alert"><i class="fas fa-exclamation-circle"></i> An error occurred. Please try again.</div>';
+        showToast('Error: An error occurred. Please try again.', true);
+      }
+    });
+    
+    function resendCode(e) {
+      e.preventDefault();
+      showToast('<i class="fa-solid fa-circle-check"></i> Code resent to your email!');
+      // In production, call send-reset-code.php again
+    }
+  </script>
+</body>
+</html>

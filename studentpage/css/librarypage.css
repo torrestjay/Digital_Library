@@ -152,7 +152,7 @@ body, html {
 .btn.borrow { background: #1b678f; }
 .btn.borrow:hover { background: #15597c; }
 .btn.borrowed { background: #d1d1d1; color:#666; cursor: not-allowed }
-.book-card .btn, .book-card a.btn { width: 100%; margin-top:8px }
+.book-card .btn, .book-card a.btn { width: 100%; margin-top:20px }
 /* Book Categories */
 .book-category {
   margin-bottom: 30px;

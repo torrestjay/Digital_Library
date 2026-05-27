@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_book'])) {
     $upload_dir = "../Images/";
     move_uploaded_file($_FILES['cover_image']['tmp_name'], $upload_dir . $cover_image);
   }
-  $stmt = $conn->prepare("INSERT INTO books (title, author, category, cover_image, views, description, created_at) VALUES (?, ?, ?, ?, 0, ?, NOW())");
+  $stmt = $conn->prepare("INSERT INTO books (title, author, category, cover_image, views, description, availability, created_at) VALUES (?, ?, ?, ?, 0, ?, 1, NOW())");
   if (!$stmt) {
     die("Prepare failed: " . $conn->error);
   }

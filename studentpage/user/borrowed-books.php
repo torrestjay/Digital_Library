@@ -7,13 +7,23 @@ if (!isset($_SESSION['user_id'])) {
   exit();
 }
 
+// Ensure reading_progress column exists
+$checkColStmt = $conn->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='borrowed_books' AND COLUMN_NAME='reading_progress'");
+$checkColStmt->execute();
+$colResult = $checkColStmt->get_result();
+if ($colResult->num_rows === 0) {
+  // Column doesn't exist, add it
+  $conn->query("ALTER TABLE borrowed_books ADD COLUMN reading_progress INT DEFAULT 0");
+}
+$checkColStmt->close();
+
 $user_id = (int)$_SESSION['user_id'];
 $success = $_SESSION['success'] ?? '';
 $error = $_SESSION['error'] ?? '';
 unset($_SESSION['success'], $_SESSION['error']);
 
 $borrowedBooks = [];
-$stmt = $conn->prepare('SELECT bb.id, bb.book_id, bb.borrow_date, bb.due_date, bb.return_date, bb.status, b.title, b.author, b.cover_image FROM borrowed_books bb JOIN books b ON bb.book_id = b.id WHERE bb.user_id = ? ORDER BY bb.borrow_date DESC, bb.id DESC');
+$stmt = $conn->prepare('SELECT bb.id, bb.book_id, bb.borrow_date, bb.due_date, bb.return_date, bb.status, bb.reading_progress, b.title, b.author, b.cover_image FROM borrowed_books bb JOIN books b ON bb.book_id = b.id WHERE bb.user_id = ? ORDER BY bb.borrow_date DESC, bb.id DESC');
 if ($stmt) {
   $stmt->bind_param('i', $user_id);
   $stmt->execute();
@@ -72,10 +82,15 @@ function borrowed_days_until_due($due_date, $return_date) {
 $activeCount = 0;
 $returnedCount = 0;
 $overdueCount = 0;
+$pendingCount = 0;
 foreach ($borrowedBooks as $row) {
   $isReturned = !empty($row['return_date']) || $row['status'] === 'returned';
   $isActive = $row['status'] === 'borrowed' && !$isReturned;
-  if ($isActive) {
+  $isPending = $row['status'] === 'pending';
+  
+  if ($isPending) {
+    $pendingCount++;
+  } elseif ($isActive) {
     $activeCount++;
     if (strtotime($row['due_date']) < strtotime(date('Y-m-d'))) {
       $overdueCount++;
@@ -110,7 +125,7 @@ foreach ($borrowedBooks as $row) {
     .stat-card strong { display: block; color: #5f7385; font-size: 0.85rem; margin-bottom: 8px; font-weight: 600; }
     .stat-card span { font-size: 1.7rem; font-weight: 700; color: #0e3a5d; }
     .borrowed-list { display: grid; gap: 16px; }
-    .borrowed-item { display: grid; grid-template-columns: 92px 1fr auto; gap: 16px; align-items: stretch; background: #fff; border: 1px solid #e5edf5; border-radius: 18px; box-shadow: 0 10px 26px rgba(14, 58, 93, 0.08); padding: 16px; transition: all 0.2s ease; }
+    .borrowed-item { display: grid; grid-template-columns: 92px 1fr 150px; gap: 16px; align-items: stretch; background: #fff; border: 1px solid #e5edf5; border-radius: 18px; box-shadow: 0 10px 26px rgba(14, 58, 93, 0.08); padding: 16px; transition: all 0.2s ease; }
     .borrowed-item:hover { box-shadow: 0 14px 32px rgba(14, 58, 93, 0.12); }
     .cover { width: 92px; height: 130px; border-radius: 12px; object-fit: cover; display: block; background: #e8eff7; }
     .book-meta { display: flex; flex-direction: column; }
@@ -156,6 +171,48 @@ foreach ($borrowedBooks as $row) {
   outline: none;
   border-color: #0e3a5d;
   box-shadow: 0 0 0 3px rgba(14, 58, 93, 0.1);
+}
+
+.status-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+  border-bottom: 3px solid #e8eef7;
+  padding-bottom: 12px;
+  background: #ffffff;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #e5edf5;
+  box-shadow: 0 2px 8px rgba(14, 58, 93, 0.06);
+}
+
+.tab-btn {
+  padding: 12px 18px;
+  border: none;
+  background: transparent;
+  color: #7a8e9f;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+  margin-bottom: 0;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  color: #0e3a5d;
+  background: #f5f9fc;
+}
+
+.tab-btn.active {
+  color: #fff;
+  background: #0e3a5d;
+  border-bottom-color: #0e3a5d;
 }
 
 #searchBooks {
@@ -209,8 +266,9 @@ foreach ($borrowedBooks as $row) {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  justify-content: center;
-  min-width: 180px;
+  justify-content: flex-start;
+  min-width: 150px;
+  width: 100%;
 }
 
 .action-stack form {
@@ -221,20 +279,21 @@ foreach ($borrowedBooks as $row) {
 .action-stack a.btn,
 .action-stack button.btn {
   width: 100%;
-  height: 44px;
-  min-height: 44px;
-  padding: 0 16px;
+  height: 38px;
+  min-height: 38px;
+  padding: 0 12px;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .action-stack .btn.read {
@@ -265,6 +324,44 @@ foreach ($borrowedBooks as $row) {
   pointer-events: none;
 }
 
+.action-stack .btn.borrowed-badge {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: #fff;
+  border: none;
+  cursor: default;
+  pointer-events: none;
+  font-weight: 700;
+}
+
+.action-stack .btn.pending-status {
+  background: linear-gradient(135deg, #ff9800, #f57c00);
+  color: #fff;
+  border: none;
+  cursor: default;
+  pointer-events: none;
+  font-weight: 700;
+}
+
+.action-stack .btn.view-details {
+  background: #f5f9fc;
+  color: #0e3a5d;
+  border: 1px solid #d9e5f0;
+}
+
+.action-stack .btn.view-details:hover {
+  background: #e8eff7;
+  border-color: #0e3a5d;
+}
+
+.action-stack .btn.extend {
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+  color: #fff;
+}
+
+.action-stack .btn.extend:hover {
+  background: linear-gradient(135deg, #1976D2, #1565C0);
+}
+
 .action-stack .btn:focus {
   outline: none;
   box-shadow: 0 0 0 3px rgba(14, 58, 93, 0.1);
@@ -274,12 +371,13 @@ foreach ($borrowedBooks as $row) {
       .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } 
       .borrowed-item { grid-template-columns: 92px 1fr; } 
       .action-stack { grid-column: 1 / -1; min-width: 0; flex-direction: row; gap: 12px; }
-      .action-stack .btn { flex: 1; }
+      .action-stack .btn { flex: 1; min-width: 0; }
     }
     @media (max-width: 900px) {
       .toolbar { flex-direction: column; }
       #searchBooks { max-width: 100%; }
-      #filterBooks, #sortBooks { width: 100%; }
+      #sortBooks { width: 100%; }
+      .status-tabs { overflow-x: auto; }
     }
     @media (max-width: 700px) { 
       .content { padding: 18px; } 
@@ -292,8 +390,10 @@ foreach ($borrowedBooks as $row) {
       .action-stack .btn { width: 100%; }
       .toolbar { flex-direction: column; }
       #searchBooks { max-width: 100%; width: 100%; }
-      #filterBooks, #sortBooks { width: 100%; }
+      #sortBooks { width: 100%; }
       .pagination { margin-top: 20px; }
+      .status-tabs { overflow-x: auto; }
+      .tab-btn { padding: 10px 14px; font-size: 12px; }
     }
   </style>
 </head>
@@ -327,22 +427,25 @@ foreach ($borrowedBooks as $row) {
         </div>
         <div class="stats-grid">
           <div class="stat-card"><strong>Active Borrowed</strong><span><?php echo $activeCount; ?></span></div>
+          <div class="stat-card"><strong>Pending Approval</strong><span><?php echo $pendingCount; ?></span></div>
           <div class="stat-card"><strong>Returned</strong><span><?php echo $returnedCount; ?></span></div>
-          <div class="stat-card"><strong>Overdue</strong><span><?php echo $overdueCount; ?></span></div>
           <div class="stat-card"><strong>Total Records</strong><span><?php echo count($borrowedBooks); ?></span></div>
         </div>
         <?php if (empty($borrowedBooks)): ?>
           <div class="empty-state">You have not borrowed any books yet.</div>
         <?php else: ?>
+          <!-- Status Tabs at the Top -->
+          <div class="status-tabs">
+            <button class="tab-btn active" data-status="all">📚 All Books</button>
+            <button class="tab-btn" data-status="pending">⏳ Pending</button>
+            <button class="tab-btn" data-status="borrowed">📖 Borrowed</button>
+            <button class="tab-btn" data-status="returned">✓ Returned</button>
+            <button class="tab-btn" data-status="overdue">⚠️ Overdue</button>
+          </div>
+
+          <!-- Search and Sort Toolbar -->
           <div class="toolbar">
             <input type="text" id="searchBooks" placeholder="Search title or author...">
-            <select id="filterBooks">
-              <option value="all">All Books</option>
-              <option value="borrowed">Borrowed</option>
-              <option value="returned">Returned</option>
-              <option value="pending">Pending</option>
-              <option value="overdue">Overdue</option>
-            </select>
             <select id="sortBooks">
               <option value="newest">Newest Borrowed</option>
               <option value="oldest">Oldest Borrowed</option>
@@ -363,7 +466,7 @@ foreach ($borrowedBooks as $row) {
                 $daysLeftText = borrowed_days_left($book['due_date'], $book['return_date']);
                 $daysUntilDue = borrowed_days_until_due($book['due_date'], $book['return_date']);
                 $canRequestExtension = $isActive && $daysUntilDue !== null && $daysUntilDue >= 0 && $daysUntilDue <= 2;
-                $progress = borrowed_progress_percent($book['borrow_date'], $book['due_date'], $book['return_date']);
+                $progress = !empty($book['reading_progress']) ? (int)$book['reading_progress'] : 0;
                 $overdue = $isActive && strtotime($book['due_date']) < strtotime(date('Y-m-d'));
                 $statusLabel = $isReturned ? 'Returned' : ucfirst($status);
                 $dataStatus = $overdue ? 'overdue' : strtolower($statusLabel);
@@ -394,7 +497,7 @@ foreach ($borrowedBooks as $row) {
                   <?php if ($isActive): ?>
                     <div class="progress-wrap">
                       <div class="progress-head">
-                        <span>Borrow Duration</span>
+                        <span>Reading Progress</span>
                         <span><?php echo $progress; ?>%</span>
                       </div>
                       <div class="progress-bar <?php echo $overdue ? 'overdue' : ''; ?>">
@@ -404,29 +507,34 @@ foreach ($borrowedBooks as $row) {
                   <?php endif; ?>
                 </div>
                 <div class="action-stack">
-                  <?php if ($isActive): ?>
-                    <a class="btn read" href="read.php?id=<?php echo (int)$book['book_id']; ?>">Read</a>
-                  <?php else: ?>
-                    <button type="button" class="btn disabled" disabled>Read Unavailable</button>
-                  <?php endif; ?>
-                  <?php if ($isActive): ?>
-                    <form method="post" action="return_book.php" onsubmit="return confirmReturn(event)">
+                  <?php if ($status === 'pending'): ?>
+                    <!-- Pending Status - Waiting for Admin Approval -->
+                    <button type="button" class="btn read disabled" disabled title="Waiting for admin approval to read this book">📖 Read (Pending)</button>
+                    <button type="button" class="btn pending-status" disabled title="Waiting for admin approval">⏳ Pending Approval</button>
+                    <a class="btn view-details" href="Book-Details.php?id=<?php echo (int)$book['book_id']; ?>">📋 View Details</a>
+                  <?php elseif ($isActive): ?>
+                    <!-- Active Borrow -->
+                    <a class="btn read" href="read.php?id=<?php echo (int)$book['book_id']; ?>">📖 Read</a>
+                    <button type="button" class="btn borrowed-badge" disabled title="You have borrowed this book">✓ Borrowed</button>
+                    <form method="post" action="return_book.php" onsubmit="return confirmReturn(event)" style="flex: 1;">
                       <input type="hidden" name="borrow_id" value="<?php echo (int)$book['id']; ?>">
                       <input type="hidden" name="book_id" value="<?php echo (int)$book['book_id']; ?>">
-                      <button type="submit" class="btn return">Return</button>
+                      <button type="submit" class="btn return" style="width: 100%;">↩️ Return Book</button>
                     </form>
                     <?php if ($canRequestExtension): ?>
-                      <form method="post" action="request_extension.php" onsubmit="return confirmExtension(event)">
+                      <form method="post" action="request_extension.php" onsubmit="return confirmExtension(event)" style="flex: 1;">
                         <input type="hidden" name="borrow_id" value="<?php echo (int)$book['id']; ?>">
-                        <button type="submit" class="btn return">Extend Due Date</button>
+                        <button type="submit" class="btn extend" style="width: 100%;">⏱️ Extend Due</button>
                       </form>
                     <?php endif; ?>
+                  <?php elseif ($isReturned): ?>
+                    <!-- Returned Books -->
+                    <a class="btn view-details" href="Book-Details.php?id=<?php echo (int)$book['book_id']; ?>">📋 View Details</a>
+                    <a class="btn return" href="borrow.php?book_id=<?php echo (int)$book['book_id']; ?>" style="flex: 1;">📚 Borrow Again</a>
                   <?php else: ?>
-                    <?php if ($canBorrowAgain): ?>
-                      <a class="btn return" href="borrow.php?book_id=<?php echo (int)$book['book_id']; ?>">Borrow Again</a>
-                    <?php else: ?>
-                      <button type="button" class="btn disabled" disabled>Not Available</button>
-                    <?php endif; ?>
+                    <!-- Rejected or Unavailable -->
+                    <button type="button" class="btn disabled" disabled>❌ Not Available</button>
+                    <a class="btn view-details" href="Book-Details.php?id=<?php echo (int)$book['book_id']; ?>">📋 View Details</a>
                   <?php endif; ?>
                 </div>
               </article>
@@ -493,14 +601,15 @@ foreach ($borrowedBooks as $row) {
     }
 
     const searchInput = document.getElementById('searchBooks');
-    const filterInput = document.getElementById('filterBooks');
     const sortInput = document.getElementById('sortBooks');
     const bookList = document.getElementById('bookList');
     const emptyState = document.getElementById('emptyState');
+    const tabButtons = document.querySelectorAll('.tab-btn');
 
     let cards = Array.from(document.querySelectorAll('.borrowed-item'));
     const booksPerPage = 5;
     let currentPage = 1;
+    let currentStatusFilter = 'all';
 
     function renderBooks() {
       let filtered = cards.filter(card => {
@@ -510,8 +619,7 @@ foreach ($borrowedBooks as $row) {
         const status = card.dataset.status || '';
 
         const matchSearch = search === '' || title.includes(search) || author.includes(search);
-        const filterValue = filterInput.value || 'all';
-        const matchFilter = filterValue === 'all' || status === filterValue;
+        const matchFilter = currentStatusFilter === 'all' || status === currentStatusFilter;
 
         return matchSearch && matchFilter;
       });
@@ -609,9 +717,15 @@ foreach ($borrowedBooks as $row) {
       renderBooks();
     });
 
-    filterInput.addEventListener('change', () => {
-      currentPage = 1;
-      renderBooks();
+    // Tab filtering
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentStatusFilter = btn.getAttribute('data-status');
+        currentPage = 1;
+        renderBooks();
+      });
     });
 
     sortInput.addEventListener('change', () => {

@@ -19,9 +19,9 @@ if ($due_date === null) {
     exit();
 }
 if (create_borrow_record($conn, $user_id, $book_id, $due_date, $message)) {
-    $_SESSION['success'] = 'Book borrowed successfully. Return date: ' . date('F j, Y', strtotime($due_date));
+    $_SESSION['success'] = 'Borrow request submitted! Waiting for admin approval.';
 } else {
-    $_SESSION['error'] = $message !== '' ? $message : 'Unable to borrow this book right now.';
+    $_SESSION['error'] = $message !== '' ? $message : 'Unable to submit borrow request right now.';
 }
 header("Location: borrowed-books.php");
 exit();

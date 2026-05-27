@@ -114,27 +114,21 @@ function create_borrow_record(mysqli $conn, int $userId, int $bookId, ?string $d
         }
 
         $borrowDate = date('Y-m-d');
-        $status = 'borrowed';
+        $status = 'pending';  // Changed from 'borrowed' to 'pending' - requires admin approval
 
         $insert = $conn->prepare(
             'INSERT INTO borrowed_books (user_id, book_id, borrow_date, due_date, return_date, status) VALUES (?, ?, ?, ?, NULL, ?)'
         );
         if (!$insert) {
-            throw new RuntimeException('Unable to create borrow record.');
+            throw new RuntimeException('Unable to create borrow request.');
         }
 
         $insert->bind_param('iisss', $userId, $bookId, $borrowDate, $dueDate, $status);
         $insert->execute();
         $insert->close();
 
-        $updateAvailability = $conn->prepare('UPDATE books SET availability = GREATEST(0, availability - 1) WHERE id = ?');
-        if (!$updateAvailability) {
-            throw new RuntimeException('Unable to update book availability.');
-        }
-
-        $updateAvailability->bind_param('i', $bookId);
-        $updateAvailability->execute();
-        $updateAvailability->close();
+        // Do NOT decrease availability here - wait for admin approval
+        // Availability will be decreased when admin approves the request
 
         $conn->commit();
         return true;

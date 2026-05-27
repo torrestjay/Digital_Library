@@ -6,6 +6,17 @@ if (!isset($_SESSION['user_id'])) {
   header('Location: ../login.php');
   exit();
 }
+
+// Ensure reading_progress column exists
+$checkColStmt = $conn->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='borrowed_books' AND COLUMN_NAME='reading_progress'");
+$checkColStmt->execute();
+$colResult = $checkColStmt->get_result();
+if ($colResult->num_rows === 0) {
+  // Column doesn't exist, add it
+  $conn->query("ALTER TABLE borrowed_books ADD COLUMN reading_progress INT DEFAULT 0");
+}
+$checkColStmt->close();
+
 $user_id = (int)$_SESSION['user_id'];
 $book_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($book_id <= 0) {
@@ -31,6 +42,19 @@ if (!$borrowRow) {
   header('Location: borrowed-books.php');
   exit();
 }
+
+// Track the current episode being read
+$currentEpisodeNum = isset($_GET['episode']) ? max(1, min(5, (int)$_GET['episode'])) : 1;
+
+// Update borrowed_books with reading progress
+$updateReadingStmt = $conn->prepare("UPDATE borrowed_books SET reading_progress = ? WHERE id = ? AND user_id = ?");
+if ($updateReadingStmt) {
+  $progress_percent = (int)round(($currentEpisodeNum / 5) * 100);
+  $updateReadingStmt->bind_param('iii', $progress_percent, $borrowRow['id'], $user_id);
+  $updateReadingStmt->execute();
+  $updateReadingStmt->close();
+}
+
 $lastReadStmt = $conn->prepare('SELECT read_date FROM reading_history WHERE user_id = ? AND book_id = ? ORDER BY read_date DESC LIMIT 1');
 $lastReadStmt->bind_param('ii', $user_id, $book_id);
 $lastReadStmt->execute();
@@ -93,11 +117,11 @@ $episodes = [
     ]
   ]
 ];
-$episodeIndex = isset($_GET['episode']) ? max(1, min(count($episodes), (int)$_GET['episode'])) : 1;
+$episodeIndex = $currentEpisodeNum;
 $currentEpisode = $episodes[$episodeIndex - 1];
 $previousEpisode = max(1, $episodeIndex - 1);
 $nextEpisode = min(count($episodes), $episodeIndex + 1);
-$progress = (int)round(($episodeIndex / count($episodes)) * 100);
+$progress = (int)round(($episodeIndex / 5) * 100);
 function cover_src($cover_image) {
   $clean = trim((string)$cover_image);
   return $clean === '' ? '../Images/logo.png' : '../Images/' . rawurlencode($clean);
@@ -211,7 +235,7 @@ function days_left($borrowRow) {
             <a class="btn-nav <?php echo $episodeIndex <= 1 ? 'disabled' : ''; ?>" href="<?php echo $episodeIndex > 1 ? 'read.php?id=' . $book_id . '&episode=' . $previousEpisode : '#'; ?>" <?php echo $episodeIndex <= 1 ? 'disabled aria-disabled="true"' : ''; ?>>← Previous</a>
             
             <?php if ($episodeIndex >= count($episodes)): ?>
-              <a class="btn-nav btn-finish" href="borrowed-books.php">Finished ✓</a>
+              <button type="button" class="btn-nav btn-finish" onclick="showFinishModal(<?php echo (int)$borrowRow['id']; ?>, <?php echo (int)$book_id; ?>, '<?php echo htmlspecialchars($book['title'], ENT_QUOTES, 'UTF-8'); ?>')">Finished ✓</button>
             <?php else: ?>
               <a class="btn-nav" href="read.php?id=<?php echo $book_id; ?>&episode=<?php echo $nextEpisode; ?>">Next →</a>
             <?php endif; ?>
@@ -220,9 +244,82 @@ function days_left($borrowRow) {
       </section>
     </main>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    function showFinishModal(borrowId, bookId, bookTitle) {
+      Swal.fire({
+        title: 'Finished Reading?',
+        html: `<p style="margin: 0; font-size: 1.05rem;">You've finished reading <strong>${bookTitle}</strong>.</p><p style="margin: 10px 0 0 0; color: #666; font-size: 0.95rem;">You can return the book or read it again until your return date.</p>`,
+        icon: 'success',
+        showCancelButton: false,
+        confirmButtonText: 'Return Book',
+        denyButtonText: 'Read Again',
+        showDenyButton: true,
+        confirmButtonColor: '#e8744f',
+        denyButtonColor: '#1b678f',
+        reverseButtons: true
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Return the book
+          Swal.fire({
+            title: 'Returning Book...',
+            html: 'Processing your return...',
+            allowOutsideClick: false,
+            didOpen: () => {
+              Swal.showLoading();
+            }
+          });
+          
+          const formData = new FormData();
+          formData.append('borrow_id', borrowId);
+          formData.append('book_id', bookId);
+          
+          fetch('return_book.php', {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              Swal.fire({
+                icon: 'success',
+                title: 'Book Returned',
+                text: 'Thank you for reading. You can now borrow another book.',
+                confirmButtonColor: '#0e3a5d',
+                willClose: () => {
+                  window.location.href = 'borrowed-books.php';
+                }
+              });
+            } else {
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message || 'Failed to return the book',
+                confirmButtonColor: '#0e3a5d'
+              });
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'An error occurred while returning the book',
+              confirmButtonColor: '#0e3a5d'
+            });
+          });
+        } else if (result.isDenied) {
+          // Read again - go back to episode 1
+          window.location.href = 'read.php?id=' + bookId + '&episode=1';
+        }
+      });
     }
   </script>
 </body>

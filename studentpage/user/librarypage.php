@@ -9,13 +9,18 @@ if (!isset($_SESSION['user_id'])) {
 }
 $user_id = (int)$_SESSION['user_id'];
 $borrowed_books = [];
-$borrowed_stmt = $conn->prepare("SELECT book_id FROM borrowed_books WHERE user_id = ? AND return_date IS NULL AND status IN ('pending', 'borrowed')");
+$pending_books = [];
+$borrowed_stmt = $conn->prepare("SELECT book_id, status FROM borrowed_books WHERE user_id = ? AND return_date IS NULL AND status IN ('pending', 'borrowed')");
 if ($borrowed_stmt) {
   $borrowed_stmt->bind_param('i', $user_id);
   $borrowed_stmt->execute();
   $borrowed_result = $borrowed_stmt->get_result();
   while ($row = $borrowed_result->fetch_assoc()) {
-    $borrowed_books[] = (int)$row['book_id'];
+    $book_id = (int)$row['book_id'];
+    $borrowed_books[] = $book_id;
+    if ($row['status'] === 'pending') {
+      $pending_books[] = $book_id;
+    }
   }
   $borrowed_stmt->close();
 }
@@ -70,18 +75,22 @@ function book_description($book) {
   }
   return htmlspecialchars(mb_strimwidth($description, 0, 140, '...'), ENT_QUOTES, 'UTF-8');
 }
-function render_book_card($book, $borrowed_books) {
+function render_book_card($book, $borrowed_books, $pending_books = []) {
   $book_id = isset($book['id']) ? (int)$book['id'] : 0;
   $title_plain = trim((string)($book['title'] ?? 'Untitled Book'));
   $title = htmlspecialchars($title_plain, ENT_QUOTES, 'UTF-8');
   $cover = htmlspecialchars(cover_src($book['cover_image'] ?? ''), ENT_QUOTES, 'UTF-8');
   $is_borrowed = in_array($book_id, $borrowed_books, true);
+  $is_pending = in_array($book_id, $pending_books, true);
   $title_json = json_encode($title_plain);
   $rating = book_rating($book_id);
   $rating_label = number_format($rating, 1);
   echo '<article class="book-card">';
   echo '<a class="cover-link" href="read.php?id=' . $book_id . '">';
   echo '<div class="book-cover-wrap">';
+  if ($is_pending) {
+    echo '<div class="book-pending-badge">⏳ Pending</div>';
+  }
   echo '<img class="book-cover-img" src="' . $cover . '" alt="' . $title . '">';
   echo '</div>';
   echo '</a>';
@@ -101,7 +110,7 @@ function render_book_card($book, $borrowed_books) {
   if ($is_borrowed) {
     echo '<button type="button" class="featured-btn secondary" disabled style="opacity: 0.6; cursor: not-allowed;">Borrowed</button>';
   } else {
-    echo '<button type="button" class="featured-btn primary" onclick="openBorrowModal(' . $book_id . ', ' . $title_json . ')">Borrow Book</button>';
+    echo '<button type="button" class="featured-btn primary borrow-btn" data-book-id="' . $book_id . '" data-book-title="' . htmlspecialchars($title_plain, ENT_QUOTES, 'UTF-8') . '">Borrow Book</button>';
   }
   echo '</div>';
   echo '</article>';
@@ -297,6 +306,19 @@ function render_book_card($book, $borrowed_books) {
       position: relative;
       overflow: hidden;
       border-radius: 10px;
+    }
+    .book-pending-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: linear-gradient(135deg, #ffa500, #ff8c00);
+      color: #fff;
+      font-size: 0.7rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+      z-index: 10;
+      box-shadow: 0 2px 8px rgba(255, 140, 0, 0.3);
     }
     .book-cover-img {
       width: 100%;
@@ -555,7 +577,7 @@ function render_book_card($book, $borrowed_books) {
                   </button>
                   <div class="genre-track" id="<?php echo $genre_id; ?>">
                     <?php foreach ($book_list as $book): ?>
-                      <?php render_book_card($book, $borrowed_books); ?>
+                      <?php render_book_card($book, $borrowed_books, $pending_books); ?>
                     <?php endforeach; ?>
                   </div>
                   <button class="genre-btn right" type="button" onclick="scrollGenre('<?php echo $genre_id; ?>', 1)" aria-label="Scroll right">
@@ -607,10 +629,26 @@ function render_book_card($book, $borrowed_books) {
         behavior: 'smooth'
       });
     }
+    
+    document.addEventListener('click', function(event) {
+      const borrowBtn = event.target.closest('.borrow-btn');
+      if (borrowBtn) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const bookId = borrowBtn.getAttribute('data-book-id');
+        const bookTitle = borrowBtn.getAttribute('data-book-title');
+        
+        if (bookId && bookTitle) {
+          openBorrowModal(parseInt(bookId), bookTitle);
+        }
+      }
+    });
+    
     function openBorrowModal(bookId, bookTitle) {
       Swal.fire({
         title: 'Borrow this book?',
-        html: `<p style="color: #5f7385; margin-bottom: 12px;"><strong>${bookTitle}</strong></p><p style="color: #5f7385; font-size: 0.92rem;">This will add the book to your borrowed books list for 7 days.</p>`,
+        html: '<p style="color: #5f7385; margin-bottom: 12px;"><strong>' + escapeHtml(bookTitle) + '</strong></p><p style="color: #5f7385; font-size: 0.92rem;">This will add the book to your borrowed books list for 7 days.</p>',
         icon: 'question',
         iconColor: '#0e3a5d',
         showCancelButton: true,
@@ -627,10 +665,31 @@ function render_book_card($book, $borrowed_books) {
         }
       }).then((result) => {
         if (result.isConfirmed) {
-          window.location.href = 'borrow.php?book_id=' + encodeURIComponent(bookId);
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = 'borrow.php';
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'book_id';
+          input.value = bookId;
+          form.appendChild(input);
+          document.body.appendChild(form);
+          form.submit();
         }
       });
     }
+    
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+    
     document.addEventListener('DOMContentLoaded', function() {
       // Library page initialization
     });

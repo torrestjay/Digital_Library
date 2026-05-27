@@ -15,8 +15,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $user_id = (int)$_SESSION['user_id'];
 $borrow_id = isset($_POST['borrow_id']) ? (int)$_POST['borrow_id'] : 0;
 $book_id = isset($_POST['book_id']) ? (int)$_POST['book_id'] : 0;
+$isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 
 if ($borrow_id <= 0 || $book_id <= 0) {
+  if ($isAjax) {
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Invalid return request.']);
+    exit();
+  }
   $_SESSION['error'] = 'Invalid return request.';
   header('Location: borrowed-books.php');
   exit();
@@ -38,9 +44,23 @@ try {
   $stmt->execute();
 
   $conn->commit();
+  
+  if ($isAjax) {
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true, 'message' => 'Book returned successfully.']);
+    exit();
+  }
+  
   $_SESSION['success'] = 'Book returned successfully.';
 } catch (Throwable $e) {
   $conn->rollback();
+  
+  if ($isAjax) {
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    exit();
+  }
+  
   $_SESSION['error'] = $e->getMessage();
 }
 

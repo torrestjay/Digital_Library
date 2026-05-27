@@ -16,7 +16,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 $admin_pages = [
     'admindashboard.php' => ['icon' => 'dashboard.png', 'label' => 'Dashboard', 'order' => 1],
     'AdminBookEdit.php' => ['icon' => 'BookDetails.png', 'label' => 'Book Edit', 'order' => 2],
-    'AdminUserPage.php' => ['icon' => 'userpage.png', 'label' => 'User Page', 'order' => 3],
+    'BookTracking.php' => ['icon' => 'userpage.png', 'label' => 'Book Tracking', 'order' => 3],
     'ArchivedBooks.php' => ['icon' => 'archive.png', 'label' => 'Archived Books', 'order' => 4],
 ];
 

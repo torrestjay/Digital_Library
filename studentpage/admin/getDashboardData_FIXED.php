@@ -1,13 +1,6 @@
-﻿<?php
-// Start output buffering BEFORE any includes
-ob_start();
-
-// Include database connection
+<?php
 include "../dbcon.php";
-
-// Set JSON header - headers must be sent before any output
-header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-cache, no-store, must-revalidate');
+header('Content-Type: application/json');
 
 // Enable error logging
 ini_set('log_errors', 1);
@@ -30,7 +23,7 @@ try {
     // ==========================================
     // 1. TOTAL ACTIVE BOOKS (only active records)
     // ==========================================
-    $totalBooksQuery = "SELECT COUNT(*) as total FROM books";
+    $totalBooksQuery = "SELECT COUNT(*) as total FROM books WHERE status = 'active' OR status IS NULL";
     $totalBooksResult = $conn->query($totalBooksQuery);
     
     if (!$totalBooksResult) {
@@ -43,7 +36,7 @@ try {
     // ==========================================
     // 2. AVAILABLE BOOKS (availability > 0)
     // ==========================================
-    $availableBooksQuery = "SELECT COUNT(*) as available FROM books WHERE availability > 0";
+    $availableBooksQuery = "SELECT COUNT(*) as available FROM books WHERE availability > 0 AND (status = 'active' OR status IS NULL)";
     $availableBooksResult = $conn->query($availableBooksQuery);
     
     if (!$availableBooksResult) {
@@ -56,7 +49,7 @@ try {
     // ==========================================
     // 3. BORROWED BOOKS (availability = 0)
     // ==========================================
-    $borrowedBooksQuery = "SELECT COUNT(*) as borrowed FROM books WHERE availability = 0";
+    $borrowedBooksQuery = "SELECT COUNT(*) as borrowed FROM books WHERE availability = 0 AND (status = 'active' OR status IS NULL)";
     $borrowedBooksResult = $conn->query($borrowedBooksQuery);
     
     if (!$borrowedBooksResult) {
@@ -96,7 +89,7 @@ try {
     // ==========================================
     // 6. TOTAL USERS (registered students)
     // ==========================================
-    $totalUsersQuery = "SELECT COUNT(*) as total FROM users";
+    $totalUsersQuery = "SELECT COUNT(*) as total FROM users WHERE role = 'student' OR role IS NULL";
     $totalUsersResult = $conn->query($totalUsersQuery);
     
     if (!$totalUsersResult) {
@@ -233,12 +226,7 @@ if (isset($conn)) {
     $conn->close();
 }
 
-// Clean any buffered output before sending JSON
-ob_clean();
-
-// Return ONLY JSON response
-header('Content-Type: application/json; charset=utf-8');
+// Return JSON response
 echo json_encode($response, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-ob_end_flush();
 exit;
 ?>

@@ -6,6 +6,9 @@ if (!isset($_GET['id'])) {
 }
 $book_id = $_GET['id'];
 $stmt = $conn->prepare("SELECT * FROM books WHERE id = ?");
+if (!$stmt) {
+    die("Prepare failed: " . $conn->error);
+}
 $stmt->bind_param("i", $book_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -20,17 +23,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_chapter'])) {
   $content = $_POST['content'];
   // Get the next chapter number
   $count_stmt = $conn->prepare("SELECT COUNT(*) AS count FROM chapters WHERE book_id = ?");
+  if (!$count_stmt) {
+      die("Prepare failed: " . $conn->error);
+  }
   $count_stmt->bind_param("i", $book_id);
   $count_stmt->execute();
   $count_result = $count_stmt->get_result();
   $count_data = $count_result->fetch_assoc();
   $chapter_number = $count_data['count'] + 1;
   $insert_stmt = $conn->prepare("INSERT INTO chapters (book_id, chapter_number, chapter_title, content) VALUES (?, ?, ?, ?)");
+  if (!$insert_stmt) {
+      die("Prepare failed: " . $conn->error);
+  }
   $insert_stmt->bind_param("iiss", $book_id, $chapter_number, $chapter_title, $content);
   $insert_stmt->execute();
 }
 // Fetch chapters
 $chapter_stmt = $conn->prepare("SELECT * FROM chapters WHERE book_id = ? ORDER BY chapter_number ASC");
+if (!$chapter_stmt) {
+    die("Prepare failed: " . $conn->error);
+}
 $chapter_stmt->bind_param("i", $book_id);
 $chapter_stmt->execute();
 $chapters = $chapter_stmt->get_result();

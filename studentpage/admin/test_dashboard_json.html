@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard JSON Test</title>
+    <style>
+        body { font-family: monospace; margin: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+        pre { background: #f0f0f0; padding: 15px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h2>Dashboard JSON API Test</h2>
+    <p>Testing: <code>getDashboardData.php</code></p>
+    
+    <div id="result">
+        <p>Loading...</p>
+    </div>
+
+    <script>
+        fetch('getDashboardData.php')
+            .then(response => {
+                const contentType = response.headers.get('content-type');
+                console.log('Content-Type:', contentType);
+                console.log('Status:', response.status);
+                return response.text();
+            })
+            .then(text => {
+                const resultDiv = document.getElementById('result');
+                
+                // Try to parse as JSON
+                try {
+                    const json = JSON.parse(text);
+                    resultDiv.innerHTML = `
+                        <h3 class="success">✅ Valid JSON Response</h3>
+                        <p><strong>Success:</strong> ${json.success}</p>
+                        <p><strong>Data fields:</strong> ${Object.keys(json.data).join(', ')}</p>
+                        <p><strong>Total Books:</strong> ${json.data.totalBooks}</p>
+                        <p><strong>Available Books:</strong> ${json.data.availableBooks}</p>
+                        <p><strong>Borrowed Books:</strong> ${json.data.borrowedBooks}</p>
+                        <p><strong>Pending Requests:</strong> ${json.data.pendingRequests}</p>
+                        <p><strong>Overdue Books:</strong> ${json.data.overdueBooks}</p>
+                        <p><strong>Total Users:</strong> ${json.data.totalUsers}</p>
+                        <pre>${JSON.stringify(json, null, 2)}</pre>
+                    `;
+                } catch (e) {
+                    resultDiv.innerHTML = `
+                        <h3 class="error">❌ Invalid JSON Response</h3>
+                        <p><strong>JSON Error:</strong> ${e.message}</p>
+                        <p><strong>Response length:</strong> ${text.length} bytes</p>
+                        <p><strong>First 200 chars:</strong></p>
+                        <pre>${text.substring(0, 200)}</pre>
+                        <p><strong>Full response:</strong></p>
+                        <pre>${text}</pre>
+                    `;
+                }
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = `
+                    <h3 class="error">❌ Fetch Error</h3>
+                    <pre>${error.message}</pre>
+                `;
+            });
+    </script>
+</body>
+</html>

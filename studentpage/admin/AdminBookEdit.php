@@ -1,6 +1,7 @@
 ﻿<?php
 session_start();
 include('../dbcon.php');
+include('security_utils.php');
 // Add Book functionality
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_book'])) {
   $title = $_POST['title'];
@@ -20,36 +21,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_book'])) {
   }
   $stmt->bind_param("sssss", $title, $author, $category, $cover_image, $description);
   $stmt->execute();
+  $book_id = $conn->insert_id;
   $stmt->close();
+  
+  // Log the book addition
+  $new_data = json_encode(['title' => $title, 'author' => $author, 'category' => $category, 'cover_image' => $cover_image, 'description' => $description]);
+  logAdminAction($conn, 'Add Book', 'book-add', 'book', $book_id, $title, null, $new_data);
+  
   header("Location: " . $_SERVER['PHP_SELF'] . "?added=1");
   exit();
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_book'])) {
   $book_id = (int)$_POST['book_id'];
-  $stmt = $conn->prepare("SELECT cover_image FROM books WHERE id = ?");
+  
+  // Fetch full book data for audit logging
+  $stmt = $conn->prepare("SELECT id, title, author, category, description, cover_image FROM books WHERE id = ?");
+  if (!$stmt) {
+    die("Prepare failed: " . $conn->error);
+  }
   $stmt->bind_param("i", $book_id);
   $stmt->execute();
   $result = $stmt->get_result();
   $book = $result->fetch_assoc();
   $stmt->close();
-  if ($book && !empty($book['cover_image'])) {
-    $image_path = "../Images/" . $book['cover_image'];
-    if (file_exists($image_path)) {
-      unlink($image_path);
+  
+  if ($book) {
+    // Delete cover image if exists
+    if (!empty($book['cover_image'])) {
+      $image_path = "../Images/" . $book['cover_image'];
+      if (file_exists($image_path)) {
+        unlink($image_path);
+      }
     }
+    
+    // Delete the book
+    $stmt = $conn->prepare("DELETE FROM books WHERE id = ?");
+    if (!$stmt) {
+      die("Prepare failed: " . $conn->error);
+    }
+    $stmt->bind_param("i", $book_id);
+    $stmt->execute();
+    $stmt->close();
+    
+    // Log the book deletion
+    $old_data = json_encode(['id' => $book['id'], 'title' => $book['title'], 'author' => $book['author'], 'category' => $book['category'], 'description' => $book['description']]);
+    logAdminAction($conn, 'Delete Book', 'book-delete', 'book', $book_id, $book['title'], $old_data, null);
   }
-  $stmt = $conn->prepare("DELETE FROM books WHERE id = ?");
-  $stmt->bind_param("i", $book_id);
-  $stmt->execute();
-  $stmt->close();
+  
   header("Location: " . $_SERVER['PHP_SELF'] . "?deleted=1");
   exit();
 }
+
 // Fetch book details for modal if ID is provided
 $book_to_edit = null;
 if (isset($_GET['edit_id'])) {
   $book_id = $_GET['edit_id'];
   $stmt = $conn->prepare("SELECT * FROM books WHERE id = ?");
+  if (!$stmt) {
+    die("Prepare failed: " . $conn->error);
+  }
   $stmt->bind_param("i", $book_id);
   $stmt->execute();
   $result = $stmt->get_result();
@@ -63,6 +93,16 @@ if (!$category_result) {
   die("Error fetching categories: " . mysqli_error($conn));
 }
 $genre_options = ['Fantasy', 'Fiction', 'Literary Fiction', 'Romance', 'Children', 'Health', 'Self-help', 'Motivational'];
+
+// Handle success/error messages from UpdateBook.php
+$success_message = '';
+$error_message = '';
+if (isset($_GET['success']) && $_GET['success'] == '1') {
+  $success_message = 'Book updated successfully!';
+}
+if (isset($_GET['error'])) {
+  $error_message = htmlspecialchars($_GET['error']);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -70,657 +110,859 @@ $genre_options = ['Fantasy', 'Fiction', 'Literary Fiction', 'Romance', 'Children
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="../Images/logo.png" type="image/png">
-  <title>Admin Book Edit</title>
-  <link rel="stylesheet" href="../css/AdminBookEdit.css" />
-  <!-- SweetAlert2 CDN -->
+  <title>Admin Book Management - Digital Library</title>
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Design System & Utilities -->
+  <link rel="stylesheet" href="../css/admin-design-system.css" />
+  <link rel="stylesheet" href="../css/admin-utilities.css" />
+  <link rel="stylesheet" href="../css/admin-sidebar.css" />
+  
+  <!-- SweetAlert2 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- FontAwesome -->
+  <script src="https://kit.fontawesome.com/3b07bc6295.js" crossorigin="anonymous"></script>
+  
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-    *{
-      font-family: 'Poppins', sans-serif;
-    }
-    /* Form Styles */
-    .add-book-form {
-      position: fixed;
-      inset: 0;
-      background: rgba(11, 31, 46, 0.62);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      z-index: 1200;
-    }
-    .add-book-modal {
-      background: #fff;
-      width: 100%;
-      max-width: 700px;
-      max-height: 90vh;
+    /* ============================================================
+       PAGE-SPECIFIC STYLES: BOOK MANAGEMENT
+       ============================================================ */
+    
+    .content-section {
       overflow-y: auto;
-      padding: 24px;
-      border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
-      position: relative;
+      display: flex;
+      flex-direction: column;
     }
-    .add-book-modal-header {
+
+    /* ---- PAGE HEADER & CONTROLS ---- */
+    .page-header {
+      padding: var(--space-24) var(--space-24) 0;
+      margin-bottom: var(--space-24);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 18px;
+      gap: var(--space-16);
+      flex-wrap: wrap;
     }
-    .add-book-form h3 {
+
+    .page-header .section-title {
       margin: 0;
-      color: #005b7f;
-      font-size: 1.5rem;
-      font-weight: 600;
     }
-    .modal-close-btn {
-      border: none;
-      background: #f1f5f9;
-      color: #0f172a;
-      width: 38px;
-      height: 38px;
-      border-radius: 999px;
-      cursor: pointer;
-      font-size: 1.2rem;
-      line-height: 1;
-    }
-    .modal-close-btn:hover {
-      background: #e2e8f0;
-    }
-    .add-book-form input[type="text"],
-    .add-book-form textarea {
-      width: 100%;
-      padding: 12px 15px;
-      margin-bottom: 15px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 1rem;
-      box-sizing: border-box;
-      transition: border-color 0.3s, box-shadow 0.3s;
-    }
-    .add-book-form input[type="text"]:focus,
-    .add-book-form textarea:focus {
-      border-color: #005b7f;
-      box-shadow: 0 0 0 2px rgba(0, 91, 127, 0.2);
-      outline: none;
-    }
-    .add-book-form textarea {
-      height: 120px;
-      resize: vertical;
-      min-height: 100px;
-    }
-    .add-book-form input[type="file"] {
-      margin-bottom: 15px;
-      width: 100%;
-      padding: 10px;
-      background: #f8f9fa;
-      border: 1px dashed #ddd;
-      border-radius: 6px;
-      transition: border-color 0.3s;
-    }
-    .add-book-form input[type="file"]:hover {
-      border-color: #005b7f;
-    }
-    /* Button Styles */
-    .add-book-form button {
-      background-color: #005b7f;
-      color: white;
-      padding: 12px 24px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: 500;
-      transition: all 0.3s;
-      width: 100%;
-    }
-    .add-book-form button:hover {
-      background-color: #0078a5;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 91, 127, 0.3);
-    }
-    .add-book-form button:active {
-      transform: translateY(0);
-    }
-    .book-actions-bar {
+
+    /* ---- BOOK GRID ---- */
+    .book-container {
+      padding: 0 var(--space-24) var(--space-24);
+      flex: 1;
       display: flex;
-      justify-content: flex-end;
-      margin-bottom: 18px;
+      flex-direction: column;
+      overflow-y: auto;
     }
-    .action-btn {
-      border: none;
-      border-radius: 6px;
-      padding: 10px 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+
+    .book-category-section {
+      margin-bottom: var(--space-32);
     }
-    .action-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+
+    .book-category-title {
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-600);
+      color: var(--color-text-primary);
+      margin: 0 0 var(--space-16) 0;
+      display: flex;
+      align-items: center;
+      gap: var(--space-12);
     }
-    .add-btn {
-      background: #005b7f;
-      color: #fff;
+
+    .book-category-title i {
+      color: var(--color-primary-light);
+      font-size: 20px;
     }
-    .book-item-actions {
+
+    .book-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: var(--space-20);
+    }
+
+    /* ---- BOOK CARDS ---- */
+    .book-card {
       position: relative;
       display: flex;
-      gap: 8px;
-      margin-top: 8px;
-      justify-content: center;
-      z-index: 5;
-    }
-    .edit-btn,
-    .delete-btn {
-      border: none;
-      border-radius: 999px;
-      padding: 7px 12px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      color: #fff;
-    }
-    .edit-btn {
-      background: rgba(0, 91, 127, 0.92);
-    }
-    .delete-btn {
-      background: rgba(220, 53, 69, 0.92);
-    }
-    /* Message Styles */
-    .success-message {
-      color: #28a745;
-      margin-bottom: 15px;
-      font-weight: 500;
-      padding: 10px;
-      background-color: #e8f5e9;
-      border-radius: 5px;
-      border-left: 4px solid #28a745;
-    }
-    .error-message {
-      color: #dc3545;
-      margin-bottom: 15px;
-      font-weight: 500;
-      padding: 10px;
-      background-color: #f8e8e8;
-      border-radius: 5px;
-      border-left: 4px solid #dc3545;
-    }
-    /* Book Item Styles */
-    .book-item {
-      position: relative;
-      display: inline-flex;
       flex-direction: column;
       align-items: center;
-      margin: 15px;
-      border-radius: 8px;
-      overflow: visible;
-      z-index: 1;
-      transition: all 0.3s ease;
+      cursor: pointer;
+      transition: all var(--transition-base) ease;
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: var(--space-8);
+      box-shadow: var(--shadow-sm);
     }
-    .book-item:hover {
-      transform: translateY(-5px);
+
+    .book-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-4px);
     }
+
     .book-cover {
-      border-radius: 8px;
-      transition: all 0.3s ease;
-      width: 150px;
-      height: 200px;
+      width: 140px;
+      height: 190px;
+      border-radius: var(--radius-md);
       object-fit: cover;
+      transition: all var(--transition-base) ease;
+      box-shadow: var(--shadow-md);
       display: block;
     }
-    .book-item:hover .book-cover {
+
+    .book-card:hover .book-cover {
       transform: scale(1.03);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      box-shadow: var(--shadow-lg);
     }
-    /* Book Title Overlay */
-    .book-title-overlay {
+
+    .book-title-display {
       position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+      bottom: var(--space-8);
+      left: var(--space-8);
+      right: var(--space-8);
+      background: linear-gradient(to top, rgba(14, 58, 93, 0.95), rgba(14, 58, 93, 0.8));
       color: white;
-      padding: 15px 10px 5px;
-      font-size: 13px;
+      padding: var(--space-12) var(--space-8);
+      font-size: var(--font-size-xs);
       text-align: center;
-      white-space: nowrap;
+      font-weight: var(--font-weight-600);
+      border-radius: var(--radius-sm);
+      max-height: 40px;
       overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-      box-sizing: border-box;
-      transition: all 0.3s ease;
-      font-weight: 500;
+      transition: all var(--transition-base) ease;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
-    .book-item:hover .book-title-overlay {
-      white-space: normal;
-      overflow: visible;
-      background: rgba(0, 0, 0, 0.85);
-      padding: 15px 10px;
-      backdrop-filter: blur(2px);
+
+    .book-card:hover .book-title-display {
+      max-height: 80px;
+      -webkit-line-clamp: 3;
     }
-    /* Modal Styles */
+
+    .book-actions {
+      position: absolute;
+      bottom: var(--space-12);
+      left: 50%;
+      transform: translateX(-50%) translateY(100%);
+      display: flex;
+      gap: var(--space-8);
+      z-index: 10;
+      opacity: 0;
+      transition: all var(--transition-base) ease;
+    }
+
+    .book-card:hover .book-actions {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .book-actions form {
+      margin: 0;
+    }
+
+    .btn-sm {
+      min-height: 36px;
+      padding: var(--space-8) var(--space-12);
+      font-size: var(--font-size-xs);
+      border-radius: var(--radius-md);
+    }
+
+    /* ---- EMPTY STATE ---- */
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: var(--space-40);
+      background: var(--color-bg-secondary);
+      border-radius: var(--radius-lg);
+      border: 2px dashed var(--color-border);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--space-12);
+    }
+
+    .empty-state-title {
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-600);
+      color: var(--color-text-primary);
+      margin-bottom: var(--space-8);
+    }
+
+    .empty-state-text {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+    }
+
+    /* ---- MODAL STYLES ---- */
     .modal-overlay {
-      display: <?php echo isset($book_to_edit) ? 'flex' : 'none'; ?>;
+      display: none;
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.5);
       z-index: 1000;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
+      overflow-y: auto;
     }
-    .modal-box {
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
       background: white;
-      border-radius: 10px;
-      width: 80%;
-      max-width: 700px;
+      border-radius: var(--radius-2xl);
+      box-shadow: var(--shadow-2xl);
+      width: 90%;
+      max-width: 600px;
       max-height: 90vh;
       overflow-y: auto;
-      padding: 25px;
-      box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+      margin: auto;
     }
+
     .modal-header {
       display: flex;
       align-items: center;
-      margin-bottom: 20px;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 15px;
+      justify-content: space-between;
+      padding: var(--space-24);
+      border-bottom: 1px solid var(--color-border);
+      background: var(--color-bg-secondary);
+      border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
     }
-    .modal-icon {
-      width: 40px;
-      height: 40px;
-      margin-right: 15px;
-    }
-    .modal-header h2 {
+
+    .modal-header h3 {
+      font-size: var(--font-size-xl);
+      font-weight: var(--font-weight-600);
+      color: var(--color-text-primary);
       margin: 0;
-      color: #005b7f;
+      display: flex;
+      align-items: center;
+      gap: var(--space-12);
     }
-    .chapter-btn {
-      background: #005b7f;
-      color: white;
+
+    .modal-close {
+      background: none;
       border: none;
-      padding: 8px 15px;
-      border-radius: 5px;
+      font-size: 24px;
+      color: var(--color-text-secondary);
       cursor: pointer;
-      transition: background 0.3s;
+      transition: color var(--transition-base) ease;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .chapter-btn:hover {
-      background: #0078a5;
+
+    .modal-close:hover {
+      color: var(--color-text-primary);
     }
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
+
+    /* ---- FORM STYLES ---- */
     .form-group {
-      margin-bottom: 15px;
+      margin-bottom: var(--space-20);
     }
+
     .form-group label {
       display: block;
-      margin-bottom: 5px;
-      font-weight: 500;
-      color: #555;
+      margin-bottom: var(--space-8);
+      font-weight: var(--font-weight-600);
+      color: var(--color-text-primary);
+      font-size: var(--font-size-sm);
     }
+
     .form-group input[type="text"],
+    .form-group input[type="file"],
+    .form-group select,
     .form-group textarea {
       width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      font-size: 1rem;
+      padding: var(--space-12);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      font-family: var(--font-family);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-primary);
+      transition: border-color var(--transition-base) ease;
+      background-color: white;
+      box-sizing: border-box;
     }
+
+    .form-group input[type="text"]:focus,
+    .form-group input[type="file"]:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--color-primary-light);
+      box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    }
+
     .form-group textarea {
-      min-height: 100px;
       resize: vertical;
+      min-height: 100px;
     }
-    .cover-icon {
+
+    .form-small-text {
       display: block;
-      border-radius: 5px;
-      margin-top: 10px;
+      margin-top: var(--space-8);
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
     }
-    .button-group {
+
+    .form-required {
+      color: var(--color-danger);
+    }
+
+    /* ---- FORM GRID (TWO COLUMNS) ---- */
+    .form-two-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-20);
+      margin-bottom: var(--space-20);
+    }
+
+    /* ---- MODAL ACTIONS ---- */
+    .modal-body {
+      padding: var(--space-24);
+    }
+
+    .modal-footer {
       display: flex;
+      gap: var(--space-12);
       justify-content: flex-end;
-      gap: 15px;
-      margin-top: 20px;
+      padding: var(--space-24);
+      border-top: 1px solid var(--color-border);
     }
-    .cancel-btn,
-    .save-btn {
-      padding: 10px 20px;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    .cancel-btn {
-      background: #f0f0f0;
-      color: #333;
-      text-decoration: none;
-      border: 1px solid #ddd;
-    }
-    .cancel-btn:hover {
-      background: #e0e0e0;
-    }
-    .save-btn {
-      background: #005b7f;
-      color: white;
-      border: none;
-    }
-    .save-btn:hover {
-      background: #0078a5;
-    }
-    /* Responsive Adjustments */
+    
     @media (max-width: 768px) {
-      .add-book-modal {
-        padding: 20px;
-        max-width: 100%;
+      .book-section {
+        padding: var(--space-20);
       }
+      
+      .book-row {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: var(--space-16);
+      }
+      
       .book-cover {
-        width: 120px;
-        height: 160px;
+        width: 130px;
+        height: 180px;
       }
-      .book-title-overlay {
-        font-size: 11px;
-        padding: 10px 5px 3px;
+      
+      .controls-section {
+        flex-direction: column;
+        align-items: stretch;
       }
-      .modal-box {
-        width: 95%;
-        padding: 15px;
-      }
-      .form-grid {
-        grid-template-columns: 1fr;
+      
+      .controls-section h2 {
+        margin-bottom: var(--space-12);
       }
     }
   </style>
 </head>
 <body>
+  <!-- Sidebar Behavior Script -->
+  <script src="includes/sidebar-behavior.js"></script>
+  
   <div class="container">
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-      <div class="logo" onclick="toggleSidebar()">
-        <img src="../Images/logo.png" alt="Readly Logo" />
-      </div>
-      <nav class="nav">
-        <a href="admindashboard.php"><img class="icon" src="../Images/dashboard.png" alt="Dashboard Icon" /><span>Dashboard</span></a>
-        <a href="AdminBookEdit.php"><img class="icon" src="../Images/BookDetails.png" alt="Book Edit Icon" /><span>Book Edit</span></a>
-        <a href="AdminUserPage.php"><img class="icon" src="../Images/userpage.png" alt="User Page Icon" /><span>User Page</span></a>
-        <a href="SettingAdmin.php"><img class="icon" src="../Images/settings.png" alt="Settings Icon" /><span>Account Settings</span></a>
-      </nav>
-      <div class="sign-out">
-        <a href="../logout.php"><img class="icon" src="../Images/signout.png" alt="Signout Icon" /><span>Sign Out</span></a>
-      </div>
-    </aside>
+    <!-- Standardized Admin Sidebar -->
+    <?php include 'includes/admin_sidebar.php'; ?>
+    
     <!-- Main Content -->
     <main class="main-content">
-      <!-- Header with Icons -->
-      <header class="header">
-        <div class="header-icons">
-          <!-- <img class="icon" src="../Images/notif.png" alt="Notification Icon"> -->
-          <a href="SettingAdmin.php"><img class="icon" src="../Images/profile.png"></a>
+      <!-- Content Section (No Header) -->
+      <section class="content-section">
+        <!-- Page Header with Controls -->
+        <div class="page-header">
+          <h1 class="section-title"><i class="fas fa-book"></i> Book Management</h1>
+          <button type="button" class="btn btn-primary" onclick="openAddModal()" aria-label="Add a new book">
+            <i class="fas fa-plus"></i> Add Book
+          </button>
         </div>
-      </header>
-      <!-- Title & Search Bar Section -->
-      <section class="book-controls">
-        <h2 class="book-title">Available Books</h2>
-        <div class="book-actions-bar">
-          <button type="button" class="action-btn add-btn" onclick="openAddModal()">Add Book</button>
+
+        <!-- Books Container -->
+        <div class="book-container">
+          <?php 
+          // Fetch all categories
+          $cat_result = $conn->query("SELECT DISTINCT category FROM books ORDER BY category ASC");
+          
+          if ($cat_result && $cat_result->num_rows > 0):
+            while ($cat = mysqli_fetch_assoc($cat_result)):
+              $category = $cat['category'];
+              $stmt = $conn->prepare("SELECT * FROM books WHERE category = ? ORDER BY title ASC");
+              if (!$stmt) {
+                echo "<p style='color: var(--color-danger);'>Error preparing query: " . $conn->error . "</p>";
+                continue;
+              }
+              $stmt->bind_param("s", $category);
+              $stmt->execute();
+              $books_result = $stmt->get_result();
+          ?>
+            <div class="book-category-section">
+              <h2 class="book-category-title">
+                <i class="fas fa-folder"></i>
+                <?php echo htmlspecialchars($category); ?>
+              </h2>
+              
+              <div class="book-grid">
+                <?php if ($books_result->num_rows > 0): ?>
+                  <?php while ($book = mysqli_fetch_assoc($books_result)): ?>
+                    <div class="book-card">
+                      <img src="../Images/<?php echo htmlspecialchars($book['cover_image']); ?>"
+                        alt="<?php echo htmlspecialchars($book['title']); ?>"
+                        class="book-cover"
+                        title="<?php echo htmlspecialchars($book['title']); ?>">
+                      
+                      <div class="book-title-display"><?php echo htmlspecialchars($book['title']); ?></div>
+                      
+                      <div class="book-actions">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="openEditModal(<?php echo $book['id']; ?>)" title="Edit book" aria-label="Edit book">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger" data-title="<?php echo htmlspecialchars($book['title'], ENT_QUOTES); ?>" data-id="<?php echo $book['id']; ?>" onclick="confirmArchive(this.dataset.id, this.dataset.title)" title="Archive book" aria-label="Archive book">
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                      </div>
+                    </div>
+                  <?php endwhile; ?>
+                <?php else: ?>
+                  <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                    <div class="empty-state-title">No books in this category</div>
+                    <div class="empty-state-text">Books will appear here once added</div>
+                  </div>
+                <?php endif; ?>
+              </div>
+            </div>
+          <?php 
+              $stmt->close();
+            endwhile;
+          else:
+          ?>
+            <div class="empty-state">
+              <div class="empty-state-icon"><i class="fas fa-book"></i></div>
+              <div class="empty-state-title">No books found</div>
+              <div class="empty-state-text">Click "Add Book" to get started</div>
+            </div>
+          <?php endif; ?>
         </div>
-        <!-- <div class="search-bar">
-          <input type="text" placeholder="Search" />
-          <button><img src="../Images/search-icon.png" alt="Search Icon"></button>
-        </div> -->
       </section>
-      <!-- Add Book Form -->
-      <section class="add-book-form" id="addModal" aria-hidden="true">
-        <div class="add-book-modal">
-          <div class="add-book-modal-header">
-            <h3>Add New Book</h3>
-            <button type="button" class="modal-close-btn" onclick="closeAddModal()" aria-label="Close">×</button>
+    </main>
+  </div>
+
+  <!-- Add Book Modal -->
+  <div class="modal-overlay" id="addModal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-plus"></i> Add New Book</h3>
+        <button type="button" class="modal-close" onclick="closeAddModal()" aria-label="Close modal"><i class="fas fa-times"></i></button>
+      </div>
+      <form action="" method="POST" enctype="multipart/form-data">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="title">Book Title <span class="form-required">*</span></label>
+            <input type="text" id="title" name="title" placeholder="Enter book title" required minlength="2" maxlength="255">
           </div>
-          <form action="" method="POST" enctype="multipart/form-data">
-            <input type="text" name="title" placeholder="Title" required>
-            <input type="text" name="author" placeholder="Author" required>
-            <select name="category" required>
-              <option value="">Select Genre</option>
+          
+          <div class="form-group">
+            <label for="author">Author Name <span class="form-required">*</span></label>
+            <input type="text" id="author" name="author" placeholder="Enter author name" required minlength="2" maxlength="255">
+          </div>
+          
+          <div class="form-group">
+            <label for="category">Category/Genre <span class="form-required">*</span></label>
+            <select id="category" name="category" required>
+              <option value="">Select a genre...</option>
               <?php foreach ($genre_options as $genre_option): ?>
                 <option value="<?php echo htmlspecialchars($genre_option); ?>"><?php echo htmlspecialchars($genre_option); ?></option>
               <?php endforeach; ?>
             </select>
-            <textarea name="description" placeholder="Description" required></textarea>
-            <input type="file" name="cover_image" accept="image/*" required>
-            <button type="submit" name="add_book">Add Book</button>
-          </form>
-        </div>
-      </section>
-      <!-- Book Display Section -->
-      <div class="book-section">
-        <?php while ($cat = mysqli_fetch_assoc($category_result)):
-          $category = $cat['category'];
-          $stmt = $conn->prepare("SELECT * FROM books WHERE category = ?");
-          if (!$stmt) {
-            echo "<p>Error preparing query: " . $conn->error . "</p>";
-            continue;
-          }
-          $stmt->bind_param("s", $category);
-          $stmt->execute();
-          $books_result = $stmt->get_result();
-        ?>
-          <h3><?php echo htmlspecialchars($category); ?></h3>
-          <div class="book-row">
-            <?php while ($book = mysqli_fetch_assoc($books_result)): ?>
-              <div class="book-item">
-                <img src="../Images/<?php echo htmlspecialchars($book['cover_image']); ?>"
-                  alt="<?php echo htmlspecialchars($book['title']); ?>"
-                  class="book-cover"
-                  onclick="openEditModal(<?php echo $book['id']; ?>)">
-                <div class="book-item-actions">
-                  <button type="button" class="edit-btn" onclick="openEditModal(<?php echo $book['id']; ?>)">Edit</button>
-                  <form id="delete-form-<?php echo $book['id']; ?>" method="POST" action="" style="margin:0;">
-                    <input type="hidden" name="delete_book" value="1">
-                    <input type="hidden" name="book_id" value="<?php echo $book['id']; ?>">
-                    <button type="button" class="delete-btn" data-title="<?php echo htmlspecialchars($book['title'], ENT_QUOTES); ?>" onclick="confirmDelete(this.form, this.dataset.title)">Delete</button>
-                  </form>
-                </div>
-                <div class="book-title-overlay"><?php echo htmlspecialchars($book['title']); ?></div>
-              </div>
-            <?php endwhile; ?>
           </div>
-        <?php endwhile; ?>
-      </div>
-    </main>
+          
+          <div class="form-group">
+            <label for="description">Description <span class="form-required">*</span></label>
+            <textarea id="description" name="description" placeholder="Enter book description" required minlength="10" maxlength="5000"></textarea>
+            <span class="form-small-text">Minimum 10 characters, maximum 5000 characters</span>
+          </div>
+          
+          <div class="form-group">
+            <label for="cover_image">Cover Image <span class="form-required">*</span></label>
+            <input type="file" id="cover_image" name="cover_image" accept="image/*" required>
+            <span class="form-small-text">Supported formats: JPG, PNG, GIF (Max 5MB)</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
+          <button type="submit" name="add_book" class="btn btn-primary">Add Book</button>
+        </div>
+      </form>
+    </div>
   </div>
   <!-- Edit Book Modal -->
   <?php if (isset($book_to_edit)): ?>
-    <div class="modal-overlay" id="editModal">
-      <div class="modal-box">
-        <!-- Modal Header -->
+    <div class="modal-overlay active" id="editModal">
+      <div class="modal-content">
         <div class="modal-header">
-          <img src="../Images/currently.png" alt="Icon" class="modal-icon">
-          <h2>Edit Book</h2>
+          <h3><i class="fas fa-edit"></i> Edit Book</h3>
+          <button type="button" class="modal-close" onclick="closeEditModal()" aria-label="Close modal"><i class="fas fa-times"></i></button>
         </div>
-        <!-- Manage Chapter Button
-        <div style="text-align: right; margin-bottom: 15px;">
-          <a href="manage-chapter.php?book_id="><button class="chapter-btn">Manage Chapter</button></a>
-        </div> -->
-<!-- //$book_to_edit['id'] -->
-        <!-- Form Layout -->
-        <form id="updateForm" class="modal-form" action="UpdateBook.php" method="POST" enctype="multipart/form-data">
+        
+        <form id="updateForm" action="UpdateBook.php" method="POST" enctype="multipart/form-data">
           <input type="hidden" name="book_id" value="<?php echo $book_to_edit['id']; ?>">
-          <div class="form-grid">
-            <!-- Left Column -->
-            <div class="left-column">
-              <div class="form-group">
-                <label for="title">Book Title</label>
-                <input type="text" id="title" name="title" value="<?php echo htmlspecialchars($book_to_edit['title']); ?>" required>
+          
+          <div class="modal-body">
+            <div class="form-two-column">
+              <div>
+                <div class="form-group">
+                  <label for="edit-title">Book Title <span class="form-required">*</span></label>
+                  <input type="text" id="edit-title" name="title" value="<?php echo htmlspecialchars($book_to_edit['title']); ?>" required minlength="2" maxlength="255">
+                </div>
+                
+                <div class="form-group">
+                  <label for="edit-author">Author Name <span class="form-required">*</span></label>
+                  <input type="text" id="edit-author" name="author" value="<?php echo htmlspecialchars($book_to_edit['author']); ?>" required minlength="2" maxlength="255">
+                </div>
+                
+                <div class="form-group">
+                  <label for="edit-genre">Category/Genre <span class="form-required">*</span></label>
+                  <select id="edit-genre" name="genre" required>
+                    <option value="">Select a category...</option>
+                    <?php
+                      $selected_genre = $book_to_edit['category'];
+                      $edit_genres = $genre_options;
+                      if (!in_array($selected_genre, $edit_genres, true)) {
+                        array_unshift($edit_genres, $selected_genre);
+                      }
+                      foreach ($edit_genres as $genre_option):
+                    ?>
+                      <option value="<?php echo htmlspecialchars($genre_option); ?>" <?php echo ($selected_genre === $genre_option) ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($genre_option); ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
               </div>
-              <div class="form-group">
-                <label for="author">Author's Name</label>
-                <input type="text" id="author" name="author" value="<?php echo htmlspecialchars($book_to_edit['author']); ?>" required>
-              </div>
-              <div class="form-group">
-                <label for="genre">Category/Genre</label>
-                <select id="genre" name="genre" required>
-                  <option value="">Select Genre</option>
-                  <?php
-                    $selected_genre = $book_to_edit['category'];
-                    $edit_genres = $genre_options;
-                    if (!in_array($selected_genre, $edit_genres, true)) {
-                      array_unshift($edit_genres, $selected_genre);
-                    }
-                    foreach ($edit_genres as $genre_option):
-                  ?>
-                    <option value="<?php echo htmlspecialchars($genre_option); ?>" <?php echo ($selected_genre === $genre_option) ? 'selected' : ''; ?>>
-                      <?php echo htmlspecialchars($genre_option); ?>
-                    </option>
-                  <?php endforeach; ?>
-                </select>
+              
+              <div>
+                <div class="form-group">
+                  <label>Cover Image</label>
+                  <div style="text-align: center; margin-bottom: var(--space-16);">
+                    <img src="../Images/<?php echo htmlspecialchars($book_to_edit['cover_image']); ?>" 
+                      alt="Current cover" 
+                      id="coverPreview"
+                      style="max-width: 100%; max-height: 200px; border-radius: var(--radius-md); box-shadow: var(--shadow-md); object-fit: cover;">
+                  </div>
+                  <input type="file" id="edit-cover" name="cover" accept="image/*">
+                  <span class="form-small-text">Leave empty to keep current cover. JPG, PNG, GIF (Max 5MB)</span>
+                </div>
               </div>
             </div>
-            <!-- Right Column -->
-            <div class="right-column">
-              <div class="form-group icon-input">
-                <label for="cover">Cover Photo</label>
-                <input type="file" id="cover" name="cover">
-                <img src="../Images/<?php echo htmlspecialchars($book_to_edit['cover_image']); ?>" alt="Current Cover" class="cover-icon" style="width: 80px; margin-top: 8px;">
-              </div>
-              <div class="form-group">
-                <label for="description">Description</label>
-                <textarea id="description" name="description" rows="3"><?php echo htmlspecialchars($book_to_edit['description']); ?></textarea>
-              </div>
+            
+            <div class="form-group">
+              <label for="edit-description">Description <span class="form-required">*</span></label>
+              <textarea id="edit-description" name="description" required minlength="10" maxlength="5000"><?php echo htmlspecialchars($book_to_edit['description']); ?></textarea>
+              <span class="form-small-text">Minimum 10 characters, maximum 5000 characters</span>
             </div>
           </div>
-          <!-- Buttons -->
-          <div class="button-group">
-            <a href="AdminBookEdit.php" class="cancel-btn">Cancel</a>
-            <button type="button" class="save-btn" onclick="confirmUpdate()">Update Book</button>
+          
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="validateAndSubmitEdit()">Save Changes</button>
           </div>
         </form>
       </div>
     </div>
   <?php endif; ?>
   <script>
+    console.log('[AdminBookEdit] Page loaded');
+
+    // Validate and submit edit form with client-side validation
+    function validateAndSubmitEdit() {
+      const title = document.getElementById('edit-title').value.trim();
+      const author = document.getElementById('edit-author').value.trim();
+      const genre = document.getElementById('edit-genre').value.trim();
+      const description = document.getElementById('edit-description').value.trim();
+      const coverFile = document.getElementById('edit-cover').files[0];
+      
+      let errors = [];
+      
+      // Validate title
+      if (!title) {
+        errors.push('Book title is required');
+      } else if (title.length < 2) {
+        errors.push('Book title must be at least 2 characters');
+      } else if (title.length > 255) {
+        errors.push('Book title cannot exceed 255 characters');
+      }
+      
+      // Validate author
+      if (!author) {
+        errors.push('Author name is required');
+      } else if (author.length < 2) {
+        errors.push('Author name must be at least 2 characters');
+      } else if (author.length > 255) {
+        errors.push('Author name cannot exceed 255 characters');
+      }
+      
+      // Validate genre
+      if (!genre) {
+        errors.push('Category/Genre is required');
+      }
+      
+      // Validate description
+      if (!description) {
+        errors.push('Description is required');
+      } else if (description.length < 10) {
+        errors.push('Description must be at least 10 characters');
+      } else if (description.length > 5000) {
+        errors.push('Description cannot exceed 5000 characters');
+      }
+      
+      // Validate image if provided
+      if (coverFile) {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!allowedTypes.includes(coverFile.type)) {
+          errors.push('Invalid image format. Allowed: JPG, PNG, GIF');
+        }
+        if (coverFile.size > 5000000) {
+          errors.push('Image file too large (maximum 5MB)');
+        }
+      }
+      
+      // Show errors if any
+      if (errors.length > 0) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Validation Error',
+          html: '<ul style="text-align: left; margin: 10px 0;">' + 
+                errors.map(e => '<li style="margin: 5px 0;">' + e + '</li>').join('') + 
+                '</ul>',
+          confirmButtonColor: 'var(--color-primary-light)'
+        });
+        return;
+      }
+      
+      confirmUpdate();
+    }
+    
     function confirmUpdate() {
       Swal.fire({
-        title: 'Are you sure?',
-        text: "Do you want to save the changes?",
+        title: 'Save Changes?',
+        text: 'Are you sure you want to update this book\'s information?',
         icon: 'question',
         showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, update it!',
-        cancelButtonText: 'No, cancel'
+        confirmButtonColor: 'var(--color-primary-light)',
+        cancelButtonColor: 'var(--color-text-light)',
+        confirmButtonText: 'Yes, Save',
+        cancelButtonText: 'Cancel',
+        allowOutsideClick: false
       }).then((result) => {
         if (result.isConfirmed) {
-          // Submit the form
+          Swal.fire({
+            title: 'Saving...',
+            text: 'Please wait while we update the book information.',
+            icon: 'info',
+            allowOutsideClick: false,
+            didOpen: () => {
+              Swal.showLoading();
+            }
+          });
+          
           document.getElementById('updateForm').submit();
         }
       });
     }
-    function confirmDelete(form, bookTitle) {
+
+    function confirmArchive(bookId, bookTitle) {
       Swal.fire({
-        title: 'Delete book?',
-        text: 'This will permanently remove "' + bookTitle + '" from the library.',
+        title: 'Archive this book?',
+        text: 'The book will be removed from active listings but its history will be preserved.',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it',
+        confirmButtonColor: 'var(--color-warning)',
+        cancelButtonColor: 'var(--color-text-light)',
+        confirmButtonText: 'Archive',
         cancelButtonText: 'Cancel'
       }).then((result) => {
         if (result.isConfirmed) {
-          form.submit();
+          archiveBook(bookId, bookTitle);
         }
       });
     }
+
+    function archiveBook(bookId, bookTitle) {
+      const formData = new FormData();
+      formData.append('action', 'archive');
+      formData.append('book_id', bookId);
+      formData.append('reason', `Archived by admin: ${bookTitle}`);
+
+      Swal.fire({
+        title: 'Archiving...',
+        html: 'Please wait',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      fetch('archive_operations.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+      .then(response => {
+        console.log('[AdminBookEdit] Response status:', response.status);
+        return response.text().then(text => {
+          console.log('[AdminBookEdit] Response text:', text);
+          console.log('[AdminBookEdit] Response text length:', text.length);
+          
+          if (!response.ok) {
+            // Log the error response
+            console.error('[AdminBookEdit] HTTP Error:', response.status, text);
+            throw new Error(`HTTP ${response.status}: ${text || 'No response body'}`);
+          }
+          
+          try {
+            return JSON.parse(text);
+          } catch (e) {
+            console.error('[AdminBookEdit] JSON parse error:', e, 'Text:', text);
+            throw new Error('Invalid JSON response: ' + text.substring(0, 100));
+          }
+        });
+      })
+      .then(data => {
+        console.log('[AdminBookEdit] Data:', data);
+        if (data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Book Archived',
+            text: 'The book was successfully archived.',
+            confirmButtonColor: 'var(--color-primary-dark)',
+            timer: 2000
+          }).then(() => {
+            window.location.href = 'ArchivedBooks.php';
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: data.message || 'Failed to archive book',
+            confirmButtonColor: 'var(--color-primary-dark)'
+          });
+        }
+      })
+      .catch(error => {
+        console.error('[AdminBookEdit] Archive error:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: error.message || 'An error occurred while archiving the book',
+          confirmButtonColor: 'var(--color-primary-dark)'
+        });
+      });
+    }
+
     function openAddModal() {
       const modal = document.getElementById('addModal');
-      modal.style.display = 'flex';
+      modal.classList.add('active');
       modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
     }
+
     function closeAddModal() {
       const modal = document.getElementById('addModal');
-      modal.style.display = 'none';
+      modal.classList.remove('active');
       modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
     }
-    document.addEventListener('click', function(event) {
-      const modal = document.getElementById('addModal');
-      if (modal && event.target === modal) {
-        closeAddModal();
-      }
-    });
-  </script>
-  <?php if (isset($_GET['deleted']) && $_GET['deleted'] == 1): ?>
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        Swal.fire({
-          toast: true,
-          position: 'top-end',
-          icon: 'success',
-          title: 'Book deleted successfully!',
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true
-        });
-      });
-    </script>
-  <?php endif; ?>
-  <?php if (isset($_GET['added']) && $_GET['added'] == 1): ?>
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        Swal.fire({
-          toast: true,
-          position: 'top-end',
-          icon: 'success',
-          title: 'Book added successfully!',
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true
-        });
-      });
-    </script>
-  <?php endif; ?>
-  <?php if (isset($_GET['success']) && $_GET['success'] == 1): ?>
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        Swal.fire({
-          toast: true,
-          position: 'top-end',
-          icon: 'success',
-          title: 'Book updated successfully!',
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true
-        });
-      });
-    </script>
-  <?php endif; ?>
-  <script>
-    function toggleSidebar() {
-      const sidebar = document.getElementById("sidebar");
-      sidebar.classList.toggle("collapsed");
-    }
+
     function openEditModal(bookId) {
-      // Redirect to the same page with edit_id parameter
       window.location.href = "AdminBookEdit.php?edit_id=" + bookId;
     }
-    function closeModal() {
-      // Remove the edit_id parameter from URL
+
+    function closeEditModal() {
       window.location.href = "AdminBookEdit.php";
     }
-    // Close modal when clicking outside of it
+
+    // Close modals when clicking outside
     document.addEventListener('click', function(event) {
-      const modal = document.getElementById('editModal');
-      if (modal && event.target === modal) {
-        closeModal();
+      const addModal = document.getElementById('addModal');
+      const editModal = document.getElementById('editModal');
+      
+      if (addModal && event.target === addModal) {
+        closeAddModal();
+      }
+      
+      if (editModal && event.target === editModal) {
+        closeEditModal();
       }
     });
-    // Prevent form resubmission when page is refreshed
+
+    // Keyboard shortcut: Escape to close modals
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        const addModal = document.getElementById('addModal');
+        const editModal = document.getElementById('editModal');
+        
+        if (addModal && addModal.classList.contains('active')) {
+          closeAddModal();
+        }
+        
+        if (editModal && editModal.classList.contains('active')) {
+          closeEditModal();
+        }
+      }
+    });
+
+    // Prevent form resubmission
     if (window.history.replaceState) {
       window.history.replaceState(null, null, window.location.href);
     }
+
+    // Show success/error messages
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      
+      if (urlParams.get('added') === '1') {
+        Swal.fire({
+          icon: 'success',
+          title: 'Book Added',
+          text: 'The book has been successfully added to the library.',
+          confirmButtonColor: 'var(--color-primary-dark)',
+          timer: 3000
+        });
+      }
+      
+      if (urlParams.get('success') === '1') {
+        Swal.fire({
+          icon: 'success',
+          title: 'Changes Saved',
+          text: 'The book information has been successfully updated.',
+          confirmButtonColor: 'var(--color-primary-dark)',
+          timer: 3000
+        });
+      }
+      
+      if (urlParams.get('error')) {
+        const error = decodeURIComponent(urlParams.get('error'));
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: error,
+          confirmButtonColor: 'var(--color-primary-dark)'
+        });
+      }
+    });
   </script>
 </body>
 </html>

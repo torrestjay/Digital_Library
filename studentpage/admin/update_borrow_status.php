@@ -16,17 +16,26 @@ try {
     $conn->begin_transaction();
     // Update the borrow status
     $stmt = $conn->prepare("UPDATE borrowed_books SET status = ?, return_date = CASE WHEN ? = 'returned' THEN CURDATE() ELSE return_date END WHERE id = ?");
+    if (!$stmt) {
+        throw new Exception("Prepare failed: " . $conn->error);
+    }
     $stmt->bind_param("ssi", $newStatus, $newStatus, $borrowId);
     $stmt->execute();
     // If marking as returned, update the book availability
     if ($newStatus === 'returned' && $bookId) {
         $stmt = $conn->prepare("UPDATE books SET availability = availability + 1 WHERE id = ?");
+        if (!$stmt) {
+            throw new Exception("Prepare failed: " . $conn->error);
+        }
         $stmt->bind_param("i", $bookId);
         $stmt->execute();
     }
     // If approving a request, decrease book availability
     if ($newStatus === 'borrowed' && $bookId) {
         $stmt = $conn->prepare("UPDATE books SET availability = GREATEST(0, availability - 1) WHERE id = ?");
+        if (!$stmt) {
+            throw new Exception("Prepare failed: " . $conn->error);
+        }
         $stmt->bind_param("i", $bookId);
         $stmt->execute();
     }

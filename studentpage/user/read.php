@@ -47,9 +47,13 @@ $episodes = [
     'title' => 'Episode 1',
     'heading' => 'Opening Scene',
     'body' => [
-      'The first quiet pages of the story set the tone and introduce the world around the main character.',
-      'Small details matter here: a place, a mood, a habit, or a moment that shapes the rest of the read.',
-      'Keep reading to see how the central conflict starts to move.'
+      'In the summer of 1922, a young man named Nick Carraway moved to West Egg, Long Island, to start a career in the bond business. Nick rented a small house next to a huge mansion owned by a mysterious millionaire named Jay Gatsby.',
+      'The central conflict starts to moveKeep reading to see how the central conflict starts to moveKeep reading to see how the central conflict starts to moveKeep reading to see how the central conflict starts to move.',
+      'Something changes. The pace picks up and the character has to react instead of observe.',
+      'The middle of the story usually carries the heaviest tension, and this episode reflects that pressure.',
+      'Choices start to matter more, and the consequences of earlier decisions become visible New information appears and the reader gets a clearer sense of the stakes.',
+      'This is the point where the story should feel like it is moving toward a result.The middle of the story usually carries the heaviest tension, and this episode reflects that pressure.'
+      
     ]
   ],
   [

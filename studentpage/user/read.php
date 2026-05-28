@@ -71,7 +71,7 @@ $episodes = [
     'title' => 'Episode 1',
     'heading' => 'Opening Scene',
     'body' => [
-      'In the summer of 1922, a young man named Nick Carraway moved to West Egg, Long Island, to start a career in the bond business. Nick rented a small house next to a huge mansion owned by a mysterious millionaire named Jay Gatsby.',
+      'KathNiel parang hindi lang sila simpleng loveteam noon 😭 parang buong era talaga sila ng Philippine pop culture. Tipong kapag narinig mo yung pangalan nila, automatic may flashback ka ng high school life, Twitter fan wars, Star Cinema posters, at yung feeling na nag-aabang ka ng teaser after ng primetime show HAHAHA.',
       'The central conflict starts to moveKeep reading to see how the central conflict starts to moveKeep reading to see how the central conflict starts to moveKeep reading to see how the central conflict starts to move.',
       'Something changes. The pace picks up and the character has to react instead of observe.',
       'The middle of the story usually carries the heaviest tension, and this episode reflects that pressure.',
@@ -173,6 +173,15 @@ function days_left($borrowRow) {
     <main class="main-content">
       <div class="topbar">
         <a class="btn-back" href="borrowed-books.php">← Back to Borrowed Books</a>
+        <button class="btn-audio-modal" onclick="openAudioModal()" title="Open Smart Audio Reading">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+          <span>Audio Read</span>
+        </button>
       </div>
       <section class="reader-shell">
         <aside class="book-panel">
@@ -245,7 +254,472 @@ function days_left($borrowRow) {
     </main>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- Smart Audio Reading Modal -->
+  <div id="audioModal" class="audio-modal-overlay" onclick="closeAudioModal(event)">
+    <div class="audio-modal" onclick="event.stopPropagation()">        <!-- Mini Player Badge (shown when modal is closed but audio is playing) -->
+        <div id="miniAudioBadge" class="audio-mini-badge hidden" onclick="openAudioModal()">
+          <div class="audio-mini-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </div>
+          <span class="audio-mini-text">Audio Playing</span>
+        </div>
+      <!-- Modal Header -->
+      <div class="audio-modal-header">
+        <h2 class="audio-modal-title">📖 Smart Audio Reading</h2>
+        <button class="audio-modal-close" onclick="closeAudioModal()" title="Close" aria-label="Close audio reading modal">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Content Tabs -->
+      <div class="audio-modal-tabs">
+        <button class="audio-tab-btn active" onclick="switchAudioTab('reader')" data-tab="reader">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+          </svg>
+          Audio Reader
+        </button>
+        <button class="audio-tab-btn" onclick="switchAudioTab('accessibility')" data-tab="accessibility">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"></path>
+            <circle cx="12" cy="8" r="1"></circle>
+            <path d="M12 11v5M9 14h6"></path>
+          </svg>
+          Accessibility
+        </button>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="audio-modal-body">
+        <!-- Audio Reader Tab -->
+        <div id="readerTab" class="audio-tab-content active">
+          <div class="audio-section">
+            <h3 class="audio-section-title">Text-to-Speech Controls</h3>
+            
+            <!-- Playback Controls -->
+            <div class="audio-controls">
+              <button id="playBtn" class="audio-btn audio-btn-play" onclick="playAudio()" title="Play audio" aria-label="Play audio">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span>Play</span>
+              </button>
+              <button id="pauseBtn" class="audio-btn audio-btn-pause hidden" onclick="pauseAudio()" title="Pause audio" aria-label="Pause audio">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="6" y="4" width="4" height="16"></rect>
+                  <rect x="14" y="4" width="4" height="16"></rect>
+                </svg>
+                <span>Pause</span>
+              </button>
+              <button id="stopBtn" class="audio-btn audio-btn-stop" onclick="stopAudio()" title="Stop audio" aria-label="Stop audio">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+                </svg>
+                <span>Stop</span>
+              </button>
+            </div>
+
+            <!-- Speed Control -->
+            <div class="audio-control-group">
+              <label class="audio-label">
+                <span class="audio-label-text">Reading Speed</span>
+                <span class="audio-label-value" id="speedValue">1.0x</span>
+              </label>
+              <input type="range" id="speedControl" class="audio-slider" min="0.5" max="2" step="0.1" value="1" onchange="changeSpeed(this.value)" oninput="changeSpeed(this.value)">
+              <div class="audio-speed-marks">
+                <span>Slow</span>
+                <span>Normal</span>
+                <span>Fast</span>
+              </div>
+            </div>
+
+            <!-- Progress Info -->
+            <div class="audio-progress-info">
+              <div class="audio-info-item">
+                <span class="audio-info-label">Current Word:</span>
+                <span class="audio-info-value" id="currentWord">Not started</span>
+              </div>
+              <div class="audio-info-item">
+                <span class="audio-info-label">Status:</span>
+                <span class="audio-info-value" id="audioStatus">Ready</span>
+              </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="audio-info-box">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              <p>The system will highlight text as it reads aloud. You can pause anytime and continue reading manually.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accessibility Tab -->
+        <div id="accessibilityTab" class="audio-tab-content">
+          <div class="audio-section">
+            <h3 class="audio-section-title">Accessibility Settings</h3>
+
+            <!-- Font Size Control -->
+            <div class="audio-control-group">
+              <label class="audio-label">
+                <span class="audio-label-text">Font Size</span>
+                <span class="audio-label-value" id="fontSizeValue">100%</span>
+              </label>
+              <input type="range" id="fontSizeControl" class="audio-slider" min="80" max="160" step="10" value="100" onchange="changeFontSize(this.value)" oninput="changeFontSize(this.value)">
+              <div class="audio-size-marks">
+                <span>Small</span>
+                <span>Normal</span>
+                <span>Large</span>
+              </div>
+            </div>
+
+            <!-- High Contrast Mode -->
+            <div class="audio-control-group">
+              <label class="audio-toggle-label">
+                <input type="checkbox" id="highContrastToggle" onchange="toggleHighContrast(this.checked)">
+                <span class="audio-toggle-switch"></span>
+                <span class="audio-label-text">High Contrast Mode</span>
+              </label>
+              <p class="audio-toggle-description">Increases color contrast for better visibility</p>
+            </div>
+
+            <!-- Line Spacing -->
+            <div class="audio-control-group">
+              <label class="audio-label">
+                <span class="audio-label-text">Line Spacing</span>
+                <span class="audio-label-value" id="lineSpacingValue">Normal</span>
+              </label>
+              <div class="audio-button-group">
+                <button class="audio-option-btn" onclick="setLineSpacing(1.6)">Normal</button>
+                <button class="audio-option-btn" onclick="setLineSpacing(1.8)">Relaxed</button>
+                <button class="audio-option-btn" onclick="setLineSpacing(2)">Spaced</button>
+              </div>
+            </div>
+
+            <!-- Voice Selection -->
+            <div class="audio-control-group">
+              <label class="audio-label">
+                <span class="audio-label-text">Voice</span>
+              </label>
+              <select id="voiceControl" class="audio-slider" style="appearance: auto; padding: 8px 12px; background: #ffffff; border: 1px solid #d4dce8; height: auto; width: 100%; cursor: pointer;" onchange="changeVoice(this.value)">
+                <option>Loading voices...</option>
+              </select>
+              <p class="audio-toggle-description">Select your preferred voice for text-to-speech. Local voices typically provide higher quality audio.</p>
+            </div>
+
+            <!-- Info Box -->
+            <div class="audio-info-box">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 16v-4M12 8h.01"></path>
+              </svg>
+              <p>These settings help make reading more comfortable for users with visual or cognitive accessibility needs.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="audio-modal-footer">
+        <button class="audio-footer-btn" onclick="resetAudioSettings()">Reset All Settings</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // ===== AUDIO READING FUNCTIONALITY =====
+    let synth = window.speechSynthesis;
+    let utterance = null;
+    let isPlaying = false;
+    let allText = '';
+    let currentWordIndex = 0;
+    let wordPositions = [];
+    let availableVoices = [];
+    let selectedVoice = null;
+
+    // Get available voices and select the best one
+    function initializeVoices() {
+      availableVoices = synth.getVoices();
+      selectBestVoice();
+      populateVoiceSelector();
+    }
+
+    // Select the highest quality voice available
+    function selectBestVoice() {
+      if (availableVoices.length === 0) return;
+      
+      // Prefer: local > Google voices > others, and natural-sounding voices
+      let bestVoice = availableVoices[0];
+      
+      // First priority: local English voices (typically highest quality)
+      let localEnglishVoice = availableVoices.find(v => 
+        v.localService && v.lang.startsWith('en')
+      );
+      if (localEnglishVoice) {
+        bestVoice = localEnglishVoice;
+      } else {
+        // Second priority: Any English voice with local support
+        let englishVoice = availableVoices.find(v => v.lang.startsWith('en'));
+        if (englishVoice) bestVoice = englishVoice;
+      }
+      
+      selectedVoice = bestVoice;
+      if (document.getElementById('voiceControl')) {
+        document.getElementById('voiceControl').value = availableVoices.indexOf(bestVoice);
+      }
+    }
+
+    // Populate voice selector dropdown
+    function populateVoiceSelector() {
+      const voiceSelect = document.getElementById('voiceControl');
+      if (!voiceSelect) return;
+      
+      voiceSelect.innerHTML = '';
+      availableVoices.forEach((voice, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = voice.name + (voice.localService ? ' (Local)' : ' (Online)');
+        voiceSelect.appendChild(option);
+      });
+      
+      // Set selected voice
+      if (selectedVoice) {
+        voiceSelect.value = availableVoices.indexOf(selectedVoice);
+      }
+    }
+
+    // Change voice selection
+    function changeVoice(index) {
+      const voiceIndex = parseInt(index);
+      if (voiceIndex >= 0 && voiceIndex < availableVoices.length) {
+        selectedVoice = availableVoices[voiceIndex];
+        if (isPlaying) {
+          stopAudio();
+          playAudio();
+        }
+      }
+    }
+
+    // Extract all story content text on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      extractStoryText();
+      // Initialize voices (wait for browser to load them)
+      if (synth.getVoices().length > 0) {
+        initializeVoices();
+      } else {
+        // Voices may not be loaded yet, wait for them
+        synth.onvoiceschanged = initializeVoices;
+      }
+    });
+
+    function extractStoryText() {
+      const contentDiv = document.querySelector('.story-content');
+      if (contentDiv) {
+        allText = contentDiv.innerText || contentDiv.textContent;
+        // Create word position map for highlighting
+        const words = allText.split(/\s+/);
+        let position = 0;
+        wordPositions = words.map(word => {
+          const start = allText.indexOf(word, position);
+          const end = start + word.length;
+          position = end;
+          return { word, start, end };
+        });
+      }
+    }
+
+    function openAudioModal() {
+      document.getElementById('audioModal').classList.add('active');
+      document.getElementById('miniAudioBadge').classList.add('hidden');
+    }
+
+    function closeAudioModal(event) {
+      // If event exists and target is not the modal itself, don't close
+      if (event && event.target.id !== 'audioModal') return;
+      
+      // Close the modal WITHOUT stopping audio
+      // Audio will continue playing in background
+      document.getElementById('audioModal').classList.remove('active');
+    }
+
+    function switchAudioTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('.audio-tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelectorAll('.audio-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Show selected tab
+      document.getElementById(tabName + 'Tab').classList.add('active');
+      event.target.closest('.audio-tab-btn').classList.add('active');
+    }
+
+    function playAudio() {
+      if (isPlaying) return;
+
+      synth.cancel();
+      
+      utterance = new SpeechSynthesisUtterance(allText);
+      utterance.rate = parseFloat(document.getElementById('speedControl').value);
+      utterance.pitch = 1.05; // Slightly elevated for clarity and natural sound
+      utterance.volume = 1;
+      
+      // Use the selected voice for higher quality
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+
+      utterance.onstart = function() {
+        isPlaying = true;
+        updatePlayPauseButtons();
+        document.getElementById('audioStatus').textContent = 'Playing...';
+        // Show mini badge if modal is closed
+        if (!document.getElementById('audioModal').classList.contains('active')) {
+          document.getElementById('miniAudioBadge').classList.remove('hidden');
+        }
+      };
+
+      utterance.onpause = function() {
+        document.getElementById('audioStatus').textContent = 'Paused';
+      };
+
+      utterance.onend = function() {
+        isPlaying = false;
+        updatePlayPauseButtons();
+        document.getElementById('audioStatus').textContent = 'Finished';
+        document.getElementById('currentWord').textContent = 'Completed';
+        clearHighlight();
+        // Hide mini badge when audio finishes
+        document.getElementById('miniAudioBadge').classList.add('hidden');
+      };
+
+      utterance.onerror = function(event) {
+        document.getElementById('audioStatus').textContent = 'Error: ' + event.error;
+        isPlaying = false;
+        updatePlayPauseButtons();
+      };
+
+      synth.speak(utterance);
+    }
+
+    function pauseAudio() {
+      synth.pause();
+      isPlaying = false;
+      updatePlayPauseButtons();
+      document.getElementById('audioStatus').textContent = 'Paused';
+    }
+
+    function stopAudio() {
+      synth.cancel();
+      isPlaying = false;
+      updatePlayPauseButtons();
+      document.getElementById('audioStatus').textContent = 'Ready';
+      document.getElementById('currentWord').textContent = 'Not started';
+      clearHighlight();
+      currentWordIndex = 0;
+      // Hide mini badge when audio stops
+      document.getElementById('miniAudioBadge').classList.add('hidden');
+    }
+
+    function updatePlayPauseButtons() {
+      const playBtn = document.getElementById('playBtn');
+      const pauseBtn = document.getElementById('pauseBtn');
+      
+      if (isPlaying) {
+        playBtn.classList.add('hidden');
+        pauseBtn.classList.remove('hidden');
+      } else {
+        playBtn.classList.remove('hidden');
+        pauseBtn.classList.add('hidden');
+      }
+    }
+
+    function changeSpeed(value) {
+      document.getElementById('speedValue').textContent = parseFloat(value).toFixed(1) + 'x';
+      if (isPlaying) {
+        const currentTime = synth.paused;
+        stopAudio();
+        // Note: Resume from current position not directly supported by Web Speech API
+        // User would need to click Play again
+      }
+    }
+
+    function changeFontSize(value) {
+      document.getElementById('fontSizeValue').textContent = value + '%';
+      const storyContent = document.querySelector('.story-content');
+      storyContent.style.fontSize = (value / 100) + 'em';
+      // Apply to all paragraphs in the reading content
+      storyContent.querySelectorAll('p').forEach(p => {
+        p.style.fontSize = (1.05 * value / 100) + 'rem';
+      });
+    }
+
+    function toggleHighContrast(isChecked) {
+      const storyContent = document.querySelector('.story-content');
+      if (isChecked) {
+        storyContent.classList.add('high-contrast');
+        document.body.classList.add('high-contrast');
+      } else {
+        storyContent.classList.remove('high-contrast');
+        document.body.classList.remove('high-contrast');
+      }
+    }
+
+    function setLineSpacing(value) {
+      document.querySelector('.story-content').style.lineHeight = value;
+      const labels = ['Normal', 'Relaxed', 'Spaced'];
+      const values = [1.6, 1.8, 2];
+      const index = values.indexOf(value);
+      document.getElementById('lineSpacingValue').textContent = labels[index] || 'Normal';
+    }
+
+    function resetAudioSettings() {
+      stopAudio();
+      document.getElementById('speedControl').value = 1;
+      document.getElementById('fontSizeControl').value = 100;
+      document.getElementById('highContrastToggle').checked = false;
+      document.getElementById('speedValue').textContent = '1.0x';
+      document.getElementById('fontSizeValue').textContent = '100%';
+      document.getElementById('lineSpacingValue').textContent = 'Normal';
+      
+      // Reset voice to best available
+      selectBestVoice();
+      
+      document.querySelector('.story-content').style.fontSize = '1em';
+      document.querySelector('.story-content').style.lineHeight = '1.8';
+      document.querySelector('.story-content').classList.remove('high-contrast');
+      document.body.classList.remove('high-contrast');
+    }
+
+    function clearHighlight() {
+      document.querySelectorAll('.story-content .highlight-word').forEach(el => {
+        el.classList.remove('highlight-word');
+      });
+    }
+
+    // Close modal when Escape key is pressed (WITHOUT stopping audio)
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        const modal = document.getElementById('audioModal');
+        if (modal && modal.classList.contains('active')) {
+          // Close modal but keep audio playing
+          document.getElementById('audioModal').classList.remove('active');
+        }
+      }
+    });
+
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('collapsed');
     }

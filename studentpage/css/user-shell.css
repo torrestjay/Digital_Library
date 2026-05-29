@@ -83,6 +83,11 @@
   font-weight: 500;
 }
 
+/* Make borrowed.png icon white */
+.nav a[href="borrowed-books.php"] .icon {
+  filter: invert(1) brightness(1.2);
+}
+
 .sidebar.collapsed span {
   display: none;
 }

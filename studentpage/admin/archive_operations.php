@@ -27,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($action === 'archive') {
         $book_id = (int)$_POST['book_id'] ?? 0;
+        $reason = $_POST['reason'] ?? '';
         
         if ($book_id <= 0) {
             echo json_encode(['success' => false, 'message' => 'Invalid book ID']);
@@ -34,8 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         try {
-            // Get book details for deletion
-            $stmt = $conn->prepare("SELECT id, title, cover_image FROM books WHERE id = ?");
+            // Get book details
+            $stmt = $conn->prepare("SELECT id, title FROM books WHERE id = ?");
             if (!$stmt) {
                 throw new Exception("Prepare failed: " . $conn->error);
             }
@@ -49,22 +50,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("Book not found");
             }
             
-            // Delete cover image if exists
-            if (!empty($book['cover_image'])) {
-                $image_path = "../Images/" . $book['cover_image'];
-                if (file_exists($image_path)) {
-                    @unlink($image_path);
-                }
-            }
-            
-            // Delete the book
-            $stmt = $conn->prepare("DELETE FROM books WHERE id = ?");
+            // Mark book as archived (soft archive)
+            $stmt = $conn->prepare("UPDATE books SET archived_at = NOW(), archived_by = ?, archive_reason = ? WHERE id = ?");
             if (!$stmt) {
                 throw new Exception("Prepare failed: " . $conn->error);
             }
-            $stmt->bind_param("i", $book_id);
+            $stmt->bind_param("isi", $user_id, $reason, $book_id);
             if (!$stmt->execute()) {
-                throw new Exception("Delete failed: " . $stmt->error);
+                throw new Exception("Update failed: " . $stmt->error);
             }
             $stmt->close();
             
@@ -81,9 +74,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         exit();
     } elseif ($action === 'restore') {
-        // Restore is not implemented for direct deletion
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Restore action not available']);
+        // Restore archived book
+        $book_id = (int)$_POST['book_id'] ?? 0;
+        
+        if ($book_id <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Invalid book ID']);
+            exit();
+        }
+        
+        try {
+            // Get book details
+            $stmt = $conn->prepare("SELECT id, title FROM books WHERE id = ? AND archived_at IS NOT NULL");
+            if (!$stmt) {
+                throw new Exception("Prepare failed: " . $conn->error);
+            }
+            $stmt->bind_param("i", $book_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $book = $result->fetch_assoc();
+            $stmt->close();
+            
+            if (!$book) {
+                throw new Exception("Archived book not found");
+            }
+            
+            // Restore book (clear archive fields)
+            $stmt = $conn->prepare("UPDATE books SET archived_at = NULL, archived_by = NULL, archive_reason = NULL WHERE id = ?");
+            if (!$stmt) {
+                throw new Exception("Prepare failed: " . $conn->error);
+            }
+            $stmt->bind_param("i", $book_id);
+            if (!$stmt->execute()) {
+                throw new Exception("Restore failed: " . $stmt->error);
+            }
+            $stmt->close();
+            
+            // Return success
+            echo json_encode([
+                'success' => true,
+                'message' => 'Book restored successfully',
+                'book_id' => $book_id
+            ]);
+            
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
         exit();
     } else {
         http_response_code(400);

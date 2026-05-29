@@ -17,7 +17,7 @@ $admin_pages = [
     'admindashboard.php' => ['icon' => 'dashboard.png', 'label' => 'Dashboard', 'order' => 1],
     'AdminBookEdit.php' => ['icon' => 'BookDetails.png', 'label' => 'Book Edit', 'order' => 2],
     'BookTracking.php' => ['icon' => 'userpage.png', 'label' => 'Book Tracking', 'order' => 3],
-    'ArchivedBooks.php' => ['icon' => 'archive.png', 'label' => 'Archived Books', 'order' => 4],
+    'ArchivedBooks.php' => ['icon' => 'Details.png', 'label' => 'Archived Books', 'order' => 4],
 ];
 
 // Sort by order (uasort preserves array keys, unlike usort which reindexes)

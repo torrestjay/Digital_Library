@@ -86,8 +86,8 @@ if (isset($_GET['edit_id'])) {
   $book_to_edit = $result->fetch_assoc();
   $stmt->close();
 }
-// Fetch all unique categories
-$category_query = "SELECT DISTINCT category FROM books";
+// Fetch all unique categories (excluding archived books)
+$category_query = "SELECT DISTINCT category FROM books WHERE archived_at IS NULL";
 $category_result = mysqli_query($conn, $category_query);
 if (!$category_result) {
   die("Error fetching categories: " . mysqli_error($conn));
@@ -493,13 +493,13 @@ if (isset($_GET['error'])) {
         <!-- Books Container -->
         <div class="book-container">
           <?php 
-          // Fetch all categories
-          $cat_result = $conn->query("SELECT DISTINCT category FROM books ORDER BY category ASC");
+          // Fetch all categories (excluding archived books)
+          $cat_result = $conn->query("SELECT DISTINCT category FROM books WHERE archived_at IS NULL ORDER BY category ASC");
           
           if ($cat_result && $cat_result->num_rows > 0):
             while ($cat = mysqli_fetch_assoc($cat_result)):
               $category = $cat['category'];
-              $stmt = $conn->prepare("SELECT * FROM books WHERE category = ? ORDER BY title ASC");
+              $stmt = $conn->prepare("SELECT * FROM books WHERE category = ? AND archived_at IS NULL ORDER BY title ASC");
               if (!$stmt) {
                 echo "<p style='color: var(--color-danger);'>Error preparing query: " . $conn->error . "</p>";
                 continue;

@@ -1465,6 +1465,36 @@ body.high-contrast .story-episode {
 }
 
 /* ========================================
+   SEGMENT-LEVEL HIGHLIGHTING (TEXT-TO-SPEECH SYNC)
+   ======================================== */
+.reading-segment {
+  transition: all 0.2s ease;
+  position: relative;
+  display: inline-block;
+}
+
+.reading-segment-active {
+  background: linear-gradient(120deg, #6ba3d4 0%, #5a92c3 100%);
+  color: #ffffff !important;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(107, 163, 212, 0.3);
+  animation: segment-highlight-pulse 0.4s ease-out;
+}
+
+@keyframes segment-highlight-pulse {
+  0% {
+    transform: scale(0.98);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ========================================
 a:focus,
 button:focus {
   outline: 2px solid #0e3a5d;

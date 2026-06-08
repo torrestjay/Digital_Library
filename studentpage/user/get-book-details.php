@@ -3,7 +3,7 @@ include '../dbcon.php';
 header('Content-Type: application/json; charset=UTF-8');
 if (isset($_GET['book_id'])) {
     $book_id = intval($_GET['book_id']);
-    $stmt = $conn->prepare('SELECT id, title, author, category, description, cover_image FROM books WHERE id = ? LIMIT 1');
+    $stmt = $conn->prepare('SELECT id, title, author, category, description, cover_image FROM books WHERE id = ? AND archived_at IS NULL LIMIT 1');
     $stmt->bind_param('i', $book_id);
     $stmt->execute();
     $result = $stmt->get_result();

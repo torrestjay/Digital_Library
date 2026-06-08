@@ -22,7 +22,7 @@ if ($borrowed_stmt) {
     $borrowed_stmt->close();
 }
 $search_term = '%' . $search . '%';
-$stmt = $conn->prepare('SELECT id, title, author, category, description, cover_image FROM books WHERE title LIKE ? OR author LIKE ? OR category LIKE ? ORDER BY title ASC');
+$stmt = $conn->prepare('SELECT id, title, author, category, description, cover_image FROM books WHERE (title LIKE ? OR author LIKE ? OR category LIKE ?) AND archived_at IS NULL ORDER BY title ASC');
 if (!$stmt) {
     echo '<div class="empty-state">Search is unavailable right now.</div>';
     exit;

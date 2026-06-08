@@ -39,7 +39,7 @@ $read_stmt->close();
 // Featured Books
 $featured_books = [];
 $featured_query = mysqli_query($conn,
-"SELECT * FROM books ORDER BY views DESC LIMIT 5");
+"SELECT * FROM books WHERE archived_at IS NULL ORDER BY views DESC LIMIT 5");
 while($row = mysqli_fetch_assoc($featured_query)){
     $featured_books[] = $row;
 }

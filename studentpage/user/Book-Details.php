@@ -11,7 +11,7 @@ if ($book_id <= 0) {
     header('Location: homepage.php');
     exit();
 }
-$stmt = $conn->prepare('SELECT id, title, author, category, description, cover_image, views FROM books WHERE id = ? LIMIT 1');
+$stmt = $conn->prepare('SELECT id, title, author, category, description, cover_image, views FROM books WHERE id = ? AND archived_at IS NULL LIMIT 1');
 $stmt->bind_param('i', $book_id);
 $stmt->execute();
 $book = $stmt->get_result()->fetch_assoc();

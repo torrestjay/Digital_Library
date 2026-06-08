@@ -79,7 +79,7 @@ function create_borrow_record(mysqli $conn, int $userId, int $bookId, ?string $d
 
     $conn->begin_transaction();
     try {
-        $checkBook = $conn->prepare('SELECT availability FROM books WHERE id = ? FOR UPDATE');
+        $checkBook = $conn->prepare('SELECT availability FROM books WHERE id = ? AND archived_at IS NULL FOR UPDATE');
         if (!$checkBook) {
             throw new RuntimeException('Unable to check book availability.');
         }

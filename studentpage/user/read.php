@@ -23,7 +23,7 @@ if ($book_id <= 0) {
   echo 'Book not found.';
   exit;
 }
-$stmt = $conn->prepare('SELECT id, title, author, category, description, cover_image, views FROM books WHERE id = ? LIMIT 1');
+$stmt = $conn->prepare('SELECT id, title, author, category, description, cover_image, views FROM books WHERE id = ? AND archived_at IS NULL LIMIT 1');
 $stmt->bind_param('i', $book_id);
 $stmt->execute();
 $book = $stmt->get_result()->fetch_assoc();
@@ -438,6 +438,28 @@ function days_left($borrowRow) {
 
   <script>
     // ===== AUDIO READING FUNCTIONALITY =====
+    // SEGMENT-BASED HIGHLIGHTING APPROACH:
+    // Text is split into sentences/segments. Each segment is read individually using
+    // SpeechSynthesis. When a segment finishes (onend event), the next segment is
+    // automatically read. This ensures perfect synchronization between highlighting
+    // and narration without relying on timing calculations.
+    //
+    // BENEFITS:
+    // - Reliable synchronization using onend events
+    // - Works on all browsers that support Web Speech API
+    // - No timing drift issues
+    // - Clean segment-based highlighting
+    // - User can pause between segments
+    //
+    // IMPLEMENTATION:
+    // 1. extractStorySegments() - Splits text into sentences using punctuation
+    // 2. Each segment wrapped in a <span> for highlighting
+    // 3. playNextSegment() - Reads current segment, then onend triggers next
+    // 4. Segment is highlighted while being spoken
+    // 5. When all segments done, reading ends
+    //
+    // =====================================================
+    
     let synth = window.speechSynthesis;
     let utterance = null;
     let isPlaying = false;
@@ -446,6 +468,11 @@ function days_left($borrowRow) {
     let wordPositions = [];
     let availableVoices = [];
     let selectedVoice = null;
+    
+    // ===== SEGMENT-BASED HIGHLIGHTING =====
+    let storySegments = [];           // Array of {id, element, text, index}
+    let currentSegmentIndex = -1;     // Currently playing segment
+    let isPausedBetweenSegments = false; // Whether user paused
 
     // Get available voices and select the best one
     function initializeVoices() {
@@ -510,9 +537,28 @@ function days_left($borrowRow) {
       }
     }
 
-    // Extract all story content text on page load
+    // ===== SEGMENT-LEVEL HIGHLIGHTING FUNCTIONS =====
+    function highlightSegment(segmentIndex) {
+      if (segmentIndex >= 0 && segmentIndex < storySegments.length) {
+        const segment = storySegments[segmentIndex];
+        if (segment && segment.element) {
+          segment.element.classList.add('reading-segment-active');
+        }
+      }
+    }
+    
+    function clearAllSegmentHighlights() {
+      storySegments.forEach(segment => {
+        if (segment && segment.element) {
+          segment.element.classList.remove('reading-segment-active');
+        }
+      });
+    }
+
+    // Extract on page load
     document.addEventListener('DOMContentLoaded', function() {
       extractStoryText();
+      
       // Initialize voices (wait for browser to load them)
       if (synth.getVoices().length > 0) {
         initializeVoices();
@@ -524,18 +570,80 @@ function days_left($borrowRow) {
 
     function extractStoryText() {
       const contentDiv = document.querySelector('.story-content');
-      if (contentDiv) {
-        allText = contentDiv.innerText || contentDiv.textContent;
-        // Create word position map for highlighting
-        const words = allText.split(/\s+/);
-        let position = 0;
-        wordPositions = words.map(word => {
-          const start = allText.indexOf(word, position);
-          const end = start + word.length;
-          position = end;
-          return { word, start, end };
-        });
+      if (!contentDiv) {
+        console.error('[AUDIO] Story content not found');
+        return;
       }
+      
+      // Get all paragraphs
+      const paragraphs = Array.from(contentDiv.querySelectorAll('p'));
+      if (paragraphs.length === 0) {
+        console.error('[AUDIO] No paragraphs found');
+        return;
+      }
+      
+      // Combine all text
+      allText = paragraphs.map(p => (p.innerText || p.textContent).trim()).join(' ');
+      
+      if (allText.length === 0) {
+        console.error('[AUDIO] No text found');
+        return;
+      }
+      
+      // Split by sentence endings
+      const sentences = [];
+      const regex = /[^.!?]*[.!?]+/g;
+      let match;
+      
+      while ((match = regex.exec(allText)) !== null) {
+        const sentence = match[0].trim();
+        if (sentence.length > 0) {
+          sentences.push(sentence);
+        }
+      }
+      
+      // Fallback: if no sentences, use paragraphs
+      if (sentences.length === 0) {
+        sentences.push(...paragraphs
+          .map(p => (p.innerText || p.textContent).trim())
+          .filter(t => t.length > 0));
+      }
+      
+      // Rebuild paragraphs with segment spans
+      storySegments = [];
+      let segmentIndex = 0;
+      
+      paragraphs.forEach(para => {
+        const paraText = para.innerText || para.textContent;
+        let newHTML = '';
+        
+        // Check each sentence to see if it belongs in this paragraph
+        sentences.forEach(sentence => {
+          if (paraText.includes(sentence)) {
+            const segmentId = 'segment-' + segmentIndex;
+            storySegments.push({
+              id: segmentId,
+              element: null,
+              text: sentence,
+              index: segmentIndex
+            });
+            newHTML += '<span id="' + segmentId + '" class="reading-segment">' + sentence + '</span> ';
+            segmentIndex++;
+          }
+        });
+        
+        // Update paragraph if segments were added
+        if (newHTML.trim().length > 0) {
+          para.innerHTML = newHTML.trim();
+        }
+      });
+      
+      // Link segment objects to DOM elements
+      storySegments.forEach(seg => {
+        seg.element = document.getElementById(seg.id);
+      });
+      
+      console.log('[AUDIO] Extracted ' + storySegments.length + ' segments');
     }
 
     function openAudioModal() {
@@ -568,49 +676,90 @@ function days_left($borrowRow) {
 
     function playAudio() {
       if (isPlaying) return;
+      if (storySegments.length === 0) {
+        console.warn('[AUDIO] No segments found - attempting extraction');
+        extractStoryText();
+        if (storySegments.length === 0) {
+          console.error('[AUDIO] FATAL: No segments available');
+          document.getElementById('audioStatus').textContent = 'Error: No text';
+          return;
+        }
+      }
 
       synth.cancel();
       
-      utterance = new SpeechSynthesisUtterance(allText);
-      utterance.rate = parseFloat(document.getElementById('speedControl').value);
-      utterance.pitch = 1.05; // Slightly elevated for clarity and natural sound
-      utterance.volume = 1;
-      
-      // Use the selected voice for higher quality
-      if (selectedVoice) {
-        utterance.voice = selectedVoice;
+      // Start from beginning or resume
+      if (currentSegmentIndex < 0) {
+        currentSegmentIndex = 0;
       }
-
-      utterance.onstart = function() {
-        isPlaying = true;
-        updatePlayPauseButtons();
-        document.getElementById('audioStatus').textContent = 'Playing...';
-        // Show mini badge if modal is closed
-        if (!document.getElementById('audioModal').classList.contains('active')) {
-          document.getElementById('miniAudioBadge').classList.remove('hidden');
-        }
-      };
-
-      utterance.onpause = function() {
-        document.getElementById('audioStatus').textContent = 'Paused';
-      };
-
-      utterance.onend = function() {
+      
+      isPlaying = true;
+      updatePlayPauseButtons();
+      document.getElementById('audioStatus').textContent = 'Playing...';
+      
+      // Show mini badge if modal is closed
+      if (!document.getElementById('audioModal').classList.contains('active')) {
+        document.getElementById('miniAudioBadge').classList.remove('hidden');
+      }
+      
+      playNextSegment();
+    }
+    
+    function playNextSegment() {
+      if (!isPlaying || currentSegmentIndex >= storySegments.length) {
+        // All segments finished
         isPlaying = false;
         updatePlayPauseButtons();
         document.getElementById('audioStatus').textContent = 'Finished';
-        document.getElementById('currentWord').textContent = 'Completed';
-        clearHighlight();
-        // Hide mini badge when audio finishes
+        clearAllSegmentHighlights();
         document.getElementById('miniAudioBadge').classList.add('hidden');
+        return;
+      }
+      
+      // Get current segment
+      const segment = storySegments[currentSegmentIndex];
+      if (!segment || !segment.element) {
+        console.error('[AUDIO] Invalid segment at index ' + currentSegmentIndex);
+        currentSegmentIndex++;
+        playNextSegment();
+        return;
+      }
+      
+      // Highlight current segment
+      clearAllSegmentHighlights();
+      highlightSegment(currentSegmentIndex);
+      segment.element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      
+      // Create utterance for this segment
+      utterance = new SpeechSynthesisUtterance(segment.text);
+      utterance.rate = parseFloat(document.getElementById('speedControl').value);
+      utterance.pitch = 1.05;
+      utterance.volume = 1;
+      
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+      
+      utterance.onstart = function() {
+        // Segment started playing
       };
-
+      
+      utterance.onend = function() {
+        // When this segment finishes, play the next one
+        if (isPlaying) {
+          currentSegmentIndex++;
+          playNextSegment();
+        }
+      };
+      
       utterance.onerror = function(event) {
-        document.getElementById('audioStatus').textContent = 'Error: ' + event.error;
+        console.error('[AUDIO] Error: ' + event.error);
+        document.getElementById('audioStatus').textContent = 'Error';
         isPlaying = false;
         updatePlayPauseButtons();
+        clearAllSegmentHighlights();
       };
-
+      
       synth.speak(utterance);
     }
 
@@ -619,16 +768,19 @@ function days_left($borrowRow) {
       isPlaying = false;
       updatePlayPauseButtons();
       document.getElementById('audioStatus').textContent = 'Paused';
+      isPausedBetweenSegments = true;
     }
 
     function stopAudio() {
       synth.cancel();
       isPlaying = false;
+      isPausedBetweenSegments = false;
+      currentSegmentIndex = -1;
       updatePlayPauseButtons();
       document.getElementById('audioStatus').textContent = 'Ready';
       document.getElementById('currentWord').textContent = 'Not started';
-      clearHighlight();
-      currentWordIndex = 0;
+      clearAllSegmentHighlights();
+      
       // Hide mini badge when audio stops
       document.getElementById('miniAudioBadge').classList.add('hidden');
     }
@@ -649,10 +801,9 @@ function days_left($borrowRow) {
     function changeSpeed(value) {
       document.getElementById('speedValue').textContent = parseFloat(value).toFixed(1) + 'x';
       if (isPlaying) {
-        const currentTime = synth.paused;
+        // Changing speed requires restarting playback
         stopAudio();
-        // Note: Resume from current position not directly supported by Web Speech API
-        // User would need to click Play again
+        playAudio();
       }
     }
 
@@ -687,6 +838,7 @@ function days_left($borrowRow) {
 
     function resetAudioSettings() {
       stopAudio();
+      clearAllSegmentHighlights();
       document.getElementById('speedControl').value = 1;
       document.getElementById('fontSizeControl').value = 100;
       document.getElementById('highContrastToggle').checked = false;

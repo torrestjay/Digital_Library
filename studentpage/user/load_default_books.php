@@ -17,7 +17,7 @@ if ($borrowed_stmt) {
     $borrowed_stmt->close();
 }
 $genres = ['Fantasy', 'Fiction', 'Literary Fiction', 'Romance', 'Children', 'Health', 'Self-help', 'Motivational'];
-$book_stmt = $conn->prepare('SELECT id, title, author, category, description, cover_image FROM books WHERE category = ? ORDER BY title ASC');
+$book_stmt = $conn->prepare('SELECT id, title, author, category, description, cover_image FROM books WHERE category = ? AND archived_at IS NULL ORDER BY title ASC');
 function cover_src($cover_image) {
     $clean = trim((string)$cover_image);
     if ($clean === '') {

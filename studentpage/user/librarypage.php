@@ -26,7 +26,7 @@ if ($borrowed_stmt) {
 }
 $genres = ['Fantasy', 'Fiction', 'Literary Fiction', 'Romance', 'Children', 'Health', 'Self-help', 'Motivational'];
 $books_by_genre = [];
-$book_stmt = $conn->prepare('SELECT id, title, author, category, description, cover_image FROM books WHERE category = ? ORDER BY title ASC');
+$book_stmt = $conn->prepare('SELECT id, title, author, category, description, cover_image FROM books WHERE category = ? AND archived_at IS NULL ORDER BY title ASC');
 foreach ($genres as $genre) {
   if (!$book_stmt) {
     $books_by_genre[$genre] = [];
